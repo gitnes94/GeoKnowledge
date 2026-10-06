@@ -1,0 +1,12 @@
+# Beroenden – installeras med npm install
+node_modules/
+
+# Hemligheter – varje person har sin egen
+.env
+
+# Byggfiler
+dist/
+
+# Systemfiler
+.DS_Store
+Thumbs.db
