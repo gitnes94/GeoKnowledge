@@ -1,0 +1,28 @@
+/* Globala stilar – gäller hela appen.
+   Alla färger samlas här som variabler så de kan ändras på ett ställe. */
+:root {
+  --color-background: #0b1020;
+  --color-ocean: #111a2e;
+  --color-graticule: #b6b9c0;
+  --color-country: #2b3a55;
+  --color-country-hover: #4a6a9c;
+  --color-border: #0b1020;
+  --color-surface: #1a2440;
+  --color-text: #e2e8f0;
+  --color-text-muted: #94a3b8;
+  --color-accent: #38bdf8;
+
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  color: var(--color-text);
+  background: var(--color-background);
+}
+
+/* Bredd och höjd inkluderar padding – gör layout mycket enklare */
+* {
+  box-sizing: border-box;
+}
+
+/* Webbläsaren lägger till marginal runt body som standard – ta bort den */
+body {
+  margin: 0;
+}

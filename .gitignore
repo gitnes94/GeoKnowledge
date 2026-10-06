@@ -1,12 +1,15 @@
 # Beroenden – installeras med npm install
 node_modules/
 
-# Hemligheter – varje person har sin egen
+# Hemligheter – varje person har sin egen .env (se .env.example)
 .env
 
 # Byggfiler
 dist/
 
-# Systemfiler
+# Systemfiler (Mac / Windows)
 .DS_Store
 Thumbs.db
+
+# Editor-inställningar (personliga)
+.idea/
