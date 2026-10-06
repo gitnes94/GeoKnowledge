@@ -9,7 +9,7 @@ services:
       - "3307:3306"
     volumes:
       - db-data:/var/lib/mysql
-      - ./database:/docker-entrypoint-initdb.d
+      - ./backend/database:/docker-entrypoint-initdb.d
 
   adminer:
     image: adminer
