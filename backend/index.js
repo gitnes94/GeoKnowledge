@@ -3,7 +3,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 
-const pool = require('./database/db')
+const pool = require('./db')
 
 const app = express()
 
@@ -19,14 +19,15 @@ app.get('/api/health', async (req, res) => {
             database: 'connected'
         })
     } catch (error) {
+        console.error('Health check failed:', error)
         res.status(500).json({
             status: 'error',
-            error: error.message
+            database: 'unavailable'
         })
     }
 })
 
-const port = process.env.PORT
+const port = process.env.PORT || 3000
 
 app.listen(port, () => {
     console.log(`Servern körs på http://localhost:${port}`)
