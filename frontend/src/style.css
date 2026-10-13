@@ -12,9 +12,16 @@
   --color-text-muted: #94a3b8;
   --color-accent: #38bdf8;
 
+/* Färger för HomeView bakgrund och kort */
+  --bg-color: #E8F5E9;
+  --primary-green: #1B4D3E;
+  --card-bg: #FFFFFF;
+  --ocean-blue: #2E86C1;
+  --map-green: #A9DFBF;
+
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
-  color: var(--color-text);
-  background: var(--color-background);
+  color: var(--primary-green);
+  background: var(--bg-color);
 }
 
 /* Bredd och höjd inkluderar padding – gör layout mycket enklare */
