@@ -5,7 +5,7 @@
     <header>
         
         <router-link to="/" class = "logo-container">
-            <img src="..jordglob?" alt="Logo" />
+            <img src="../assets/geoknowledge.png" alt="Logo" />
             <h1>GeoKnowledge</h1>
         </router-link>
 
@@ -24,12 +24,22 @@
 </template>
 
 <style scoped>
+.app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
 .logo-container {
   display: flex;
   align-items: center;
   gap: 10px;
   text-decoration: none;
   color: inherit;
+}
+img {
+  height: 50px;
+  width: auto;
 }
 /* Ett smakprov på hur du kan styla navigeringen */
 .main-nav {
@@ -45,6 +55,7 @@
   justify-content: center;
   gap: 8px;
   padding: 10px 20px;
+  max-width: 150px;
   background-color: white;
   color: #1b5e20; 
   border: 3px solid #1b5e20;
