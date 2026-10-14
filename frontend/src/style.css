@@ -11,13 +11,15 @@
   --color-text: #e2e8f0;
   --color-text-muted: #94a3b8;
   --color-accent: #38bdf8;
+  --color-ocean-border: transparent;
 
 /* Färger för HomeView bakgrund och kort */
-  --bg-color: #E8F5E9;
+  --bg-color: linear-gradient( 359.8deg,  rgb(246, 247, 228) 2.2%, rgb(188, 235, 180) 99.3% );
   --primary-green: #1B4D3E;
   --card-bg: #FFFFFF;
   --ocean-blue: #2E86C1;
   --map-green: #A9DFBF;
+  
 
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
   color: var(--primary-green);
@@ -32,4 +34,6 @@
 /* Webbläsaren lägger till marginal runt body som standard – ta bort den */
 body {
   margin: 0;
+  min-height: 100vh;
+  background-attachment: fixed;
 }
