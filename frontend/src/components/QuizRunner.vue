@@ -65,6 +65,9 @@ function nextQuestion() {
         <button
             v-for="option in currentQuestion.options"
             :key="option.id"
+            class="option"
+            :class="{ selected: option.id === selectedId }"
+            :disabled="selectedId !== null"
             @click="selectAnswer(option)"
         >
           {{ option.name }}
@@ -80,4 +83,74 @@ function nextQuestion() {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+/* Gemensam stil för alla quiztyper (kontur, flagga, ...) */
+.progress {
+  display: inline-block;
+  margin: 0;
+  padding: 0.25rem 0.875rem;
+  border-radius: 999px;
+  background: #41ac5a;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+/* Svarsknapparna: två kolumner, en kolumn på smala skärmar */
+.options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.875rem;
+}
+
+@media (max-width: 480px) {
+  .options {
+    grid-template-columns: 1fr;
+  }
+}
+
+button {
+  font: inherit;
+  font-weight: 700;
+  border: 3px solid var(--primary-green, #1b4d3e);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.option {
+  padding: 0.875rem 1rem;
+  color: var(--primary-green, #1b4d3e);
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(27, 77, 62, 0.12);
+}
+
+.option:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: #f0f8f1;
+}
+
+/* Efter svar: det valda alternativet markeras, de andra tonas ned */
+.option:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.option.selected {
+  opacity: 1;
+  background: #e3f1e6;
+  box-shadow: 0 0 0 4px rgba(65, 172, 90, 0.3);
+}
+
+.next {
+  margin-top: 1.5rem;
+  padding: 0.75rem 2rem;
+  color: #ffffff;
+  background: var(--primary-green, #1b4d3e);
+}
+
+.next:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+</style>
