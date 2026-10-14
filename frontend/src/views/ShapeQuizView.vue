@@ -3,7 +3,7 @@ import { ref, shallowRef, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { loadWorld, loadCountryDetail } from '../services/countries.js'
 import { createQuestions } from '../services/quiz.js'
-import QuizRunner from '../components/QuizRunner.vue'
+import QuizRunner from '../../../../../Downloads/quiz-filer/frontend/src/components/QuizRunner.vue'
 import CountryShape from '../components/CountryShape.vue'
 
 // Hur många frågor ett quiz har

@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
+import QuizSelectView from '../views/QuizSelectView.vue';
+import ShapeQuizView from '../views/ShapeQuizView.vue';
 
 
 const router = createRouter({
@@ -9,7 +11,17 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
-    }
+    },
+    {
+      path: '/quiz',
+      name: 'quiz-select',
+      component: QuizSelectView,
+    },
+    {
+      path: '/quiz/shape',
+      name: 'shape-quiz',
+      component: ShapeQuizView,
+    },
   ]
 });
 
