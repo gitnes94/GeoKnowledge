@@ -19,6 +19,10 @@
   --card-bg: #FFFFFF;
   --ocean-blue: #2E86C1;
   --map-green: #A9DFBF;
+
+  /* Feedback i quizet: rätt och fel svar */
+  --color-correct: #2f9e4f;
+  --color-wrong: #d64545;
   
 
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;

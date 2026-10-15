@@ -35,6 +35,16 @@ function selectAnswer(option) {
   }
 }
 
+// Grönt: rätt svar (efter att användaren har svarat)
+function isCorrect(option) {
+  return selectedId.value !== null && option.id === currentQuestion.value.correct.id
+}
+
+// Rött: användarens svar, om det var fel (efter att användaren har svarat)
+function isWrong(option) {
+  return option.id === selectedId.value && option.id !== currentQuestion.value.correct.id
+}
+
 // Körs när användaren klickar på "Nästa"
 function nextQuestion() {
   if (isFinished.value) {
@@ -66,7 +76,7 @@ function nextQuestion() {
             v-for="option in currentQuestion.options"
             :key="option.id"
             class="option"
-            :class="{ selected: option.id === selectedId }"
+            :class="{ selected: option.id === selectedId, correct: isCorrect(option), wrong: isWrong(option) }"
             :disabled="selectedId !== null"
             @click="selectAnswer(option)"
         >
@@ -74,8 +84,9 @@ function nextQuestion() {
         </button>
       </div>
 
-      <button class="next"
-              :disabled="selectedId === null || isFinished"
+      <button v-if="selectedId !== null"
+              class="next"
+              :disabled="isFinished"
               @click="nextQuestion">
         Nästa
       </button>
@@ -140,6 +151,22 @@ button {
   opacity: 1;
   background: #e3f1e6;
   box-shadow: 0 0 0 4px rgba(65, 172, 90, 0.3);
+}
+
+/* Feedback efter svar: rätt svar grönt, fel svar rött */
+.option.correct {
+  opacity: 1;
+  color: #ffffff;
+  background: var(--color-correct);
+  border-color: var(--color-correct);
+}
+
+.option.wrong {
+  opacity: 1;
+  color: #ffffff;
+  background: var(--color-wrong);
+  border-color: var(--color-wrong);
+  box-shadow: 0 0 0 4px rgba(214, 69, 69, 0.3);
 }
 
 .next {
