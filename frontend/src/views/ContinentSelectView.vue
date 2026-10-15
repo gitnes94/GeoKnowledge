@@ -16,7 +16,7 @@ const continentIcons = {
     Oceania: '🏝️',
 }
 
-const continentList = Object.entries(CONTINENTS).map(([IdleDeadline, name]) => ({
+const continentList = Object.entries(CONTINENTS).map(([id, name]) => ({
     id,
     name,
     icon: continentIcons[id] || '📍',
@@ -80,13 +80,8 @@ function startQuiz() {
 }
 
 h2 {
-  margin: 0;
-  font-size: 1.75rem;
-  color: var(--primary-green, #1b4d3e);
-}
-
-.intro {
   margin: 0.5rem 0 1.5rem;
+  font-size: 1.75rem;
   color: var(--primary-green, #1b4d3e);
 }
 

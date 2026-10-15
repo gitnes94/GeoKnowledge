@@ -1,10 +1,13 @@
 <script setup>
 import { ref, shallowRef, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { loadWorld, loadCountryDetail } from '../services/countries.js'
 import { createQuestions } from '../services/quiz.js'
 import QuizRunner from '../components/QuizRunner.vue'
 import CountryShape from '../components/CountryShape.vue'
+
+// Skapar en router som kan hämta info från URL:en
+const route = useRoute()
 
 // Hur många frågor ett quiz har
 const QUESTION_COUNT = 10
@@ -35,7 +38,10 @@ function findFeature(id) {
 
 // Startar en ny omgång med nya slumpade frågor
 function startQuiz() {
-  questions.value = createQuestions(world.value, QUESTION_COUNT)
+  // Hämta kontinenten från URL:en (t.ex. ?continent=Europe), eller 'World' som standard
+  const selectedContinent = route.query.continent || 'World'
+
+  questions.value = createQuestions(world.value, QUESTION_COUNT, selectedContinent)
   result.value = null
   round.value++
 }
