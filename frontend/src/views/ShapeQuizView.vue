@@ -2,7 +2,7 @@
 import { ref, shallowRef, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { loadWorld, loadCountryDetail } from '../services/countries.js'
-import { createQuestions } from '../services/quiz.js'
+import { createQuestions, CONTINENTS } from '../services/quiz.js'
 import QuizRunner from '../components/QuizRunner.vue'
 import CountryShape from '../components/CountryShape.vue'
 
@@ -38,9 +38,14 @@ function findFeature(id) {
 
 // Startar en ny omgång med nya slumpade frågor
 function startQuiz() {
-  // Hämta kontinenten från URL:en (t.ex. ?continent=Europe), eller 'World' som standard
-  const selectedContinent = route.query.continent || 'World'
+  // Hämta värdet från URL:en
+  const queryContinent = route.query.continent
 
+  // Validera att kontinenten finns med i CONTINENTS-objektet, annars 'World'
+  const selectedContinent = Object.keys(CONTINENTS).includes(queryContinent)
+    ? queryContinent
+    : 'World'
+    
   questions.value = createQuestions(world.value, QUESTION_COUNT, selectedContinent)
   result.value = null
   round.value++
