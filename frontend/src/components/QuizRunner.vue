@@ -166,7 +166,7 @@ button {
   color: #ffffff;
   background: var(--color-wrong);
   border-color: var(--color-wrong);
-  box-shadow: 0 0 0 4px rgba(214, 69, 69, 0.3);
+  box-shadow: 0 0 0 4px rgba(198, 40, 40, 0.3);
 }
 
 .next {

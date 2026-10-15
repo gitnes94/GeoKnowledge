@@ -21,8 +21,8 @@
   --map-green: #A9DFBF;
 
   /* Feedback i quizet: rätt och fel svar */
-  --color-correct: #2f9e4f;
-  --color-wrong: #d64545;
+  --color-correct: #25813f;
+  --color-wrong: #c62828;
   
 
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
