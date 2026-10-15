@@ -14,7 +14,7 @@ Gruppprojekt i kurserna *Utveckling av webbapplikationer* och *Agil utveckling*.
 | Frontend | Vue 3, Vue Router, Vite, D3 (kartor) |
 | Backend | Node.js, Express |
 | Databas | MySQL 8.4 (körs i Docker) |
-| Inloggning | bcryptjs (lösenord), JSON Web Token |
+| Inloggning | OAuth2, JSON Web Token |
 | Kartdata | [Natural Earth](https://www.naturalearthdata.com/) (public domain) |
 
 ---
@@ -65,6 +65,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 Öppna **`backend/.env`** (inte `.env.example`!) och ersätt värdet på `JWT_SECRET=` med nyckeln du fick.
+
+Du behöver även konfigurera Google Oauth2, och ersätta GOOGLE_CLIENT_ID och GOOGLE_CLIENT_SECRET med dina värden.
 
 > ⚠️ Skriv aldrig in riktiga nycklar i `.env.example` – den filen checkas in och syns för alla.
 
