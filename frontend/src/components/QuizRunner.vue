@@ -1,4 +1,4 @@
-<script setup>
+  <script setup>
 import { ref, computed } from 'vue'
 
 // Komponenten får en lista med frågor från createQuestions i quiz.js
