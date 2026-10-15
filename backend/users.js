@@ -5,7 +5,7 @@ const pool = require('/backend/db');
 
 // POST /api/users/register
 router.post('/register', async (req, res) => {
-    const { username, email, password, provider = 'local' } = req.body;
+    const { username, email, password } = req.body;
 
     // 1. Validate required fields
     if (!username || !email) {
@@ -38,15 +38,15 @@ router.post('/register', async (req, res) => {
 
         // 4. Insert the new user into the database
         const [result] = await pool.query(
-            'INSERT INTO users (username, email, password_hash, provider) VALUES (?, ?, ?, ?)',
-            [username, email, passwordHash, provider]
+            'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
+            [username, email, passwordHash]
         );
 
         // 5. Return success response with 201 Created status
         return res.status(201).json({
             message: 'User registered successfully!',
             userId: result.insertId,
-            user: { username, email, provider }
+            user: { username, email }
         });
 
     } catch (err) {

@@ -2,10 +2,11 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const pool = require('/backend/db');
-const generateToken = require('/backend/jwt');
+const pool = require('./db');
+const bcrypt = require('bcrypt');
+const {createToken} = require('./jwt');
 
-// 1. Configure the Google OAuth2 Strategy
+// Configure the Google OAuth2 Strategy
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -14,9 +15,8 @@ passport.use(new GoogleStrategy({
     try {
         const email = profile.emails[0].value;
         const username = profile.displayName;
-        const providerId = profile.id;
 
-        // 2. Check if user already exists in MySQL
+        // Check if user already exists in MySQL
         const [existingUsers] = await pool.query(
             'SELECT * FROM users WHERE email = ?', 
             [email]
@@ -28,17 +28,19 @@ passport.use(new GoogleStrategy({
             // User exists! Use existing record
             user = existingUsers[0];
         } else {
-            // 3. User does not exist - create a new user
+            // User does not exist - create a new user
+            const saltRounds = 10;
+            let passwordHash = await bcrypt.hash(crypto.randomUUID(), saltRounds);
+
             const [result] = await pool.query(
-                'INSERT INTO users (username, email, password_hash, provider) VALUES (?, ?, NULL, ?)',
-                [username, email, 'google'] // password_hash is null for social login
+                'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
+                [username, email, passwordHash]
             );
 
             user = {
                 id: result.insertId,
                 username,
-                email,
-                provider: 'google'
+                email
             };
         }
 
@@ -58,10 +60,10 @@ router.get('/google/callback',
     (req, res) => {
         // At this point, req.user contains our database user object (either found or newly created)
         
-        // 4. Generate JWT for the session
-        const token = generateToken(req.user);
+        // Generate JWT for the session
+        const token = createToken(req.user);
 
-        // 5. Send token back to the Vue frontend
+        // Send token back to the Vue frontend
         res.redirect(`http://localhost:5173/auth/success?token=${token}`);
     }
 );

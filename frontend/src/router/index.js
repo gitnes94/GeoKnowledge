@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import QuizSelectView from '../views/QuizSelectView.vue';
 import ShapeQuizView from '../views/ShapeQuizView.vue';
+import AuthSuccess from '../views/AuthSuccess.vue';
+import Login from '../views/Login.vue';
 
 
 const router = createRouter({
@@ -22,6 +24,14 @@ const router = createRouter({
       name: 'shape-quiz',
       component: ShapeQuizView,
     },
+    {  
+      path: '/auth/success',
+      name: 'auth-success',
+      component: AuthSuccess },
+    {
+      path: '/login',
+      name: 'login',
+      component: Login },
   ]
 });
 
