@@ -87,6 +87,7 @@ const countries = computed(() => {
 
 .ocean {
   fill: var(--color-ocean);
+  stroke: var(--color-ocean-border);
 }
 
 .graticule {
