@@ -3,6 +3,8 @@ import HomeView from '../views/HomeView.vue';
 import QuizSelectView from '../views/QuizSelectView.vue';
 import ShapeQuizView from '../views/ShapeQuizView.vue';
 import FlagQuizView from '../views/FlagQuizView.vue';
+import AuthSuccess from '../views/AuthSuccess.vue';
+import Login from '../views/Login.vue';
 
 
 const router = createRouter({
@@ -27,6 +29,16 @@ const router = createRouter({
       path: '/quiz/flag',
       name: 'flag-quiz',
       component: FlagQuizView,
+    },
+    {  
+      path: '/auth/success',
+      name: 'auth-success',
+      component: AuthSuccess 
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: Login 
     },
   ]
 });
