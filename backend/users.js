@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const pool = require('/backend/db');
+const pool = require('./db');
 
 // POST /api/users/register
 router.post('/register', async (req, res) => {

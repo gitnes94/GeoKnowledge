@@ -67,6 +67,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 Öppna **`backend/.env`** (inte `.env.example`!) och ersätt värdet på `JWT_SECRET=` med nyckeln du fick.
 
 Du behöver även konfigurera Google Oauth2, och ersätta GOOGLE_CLIENT_ID och GOOGLE_CLIENT_SECRET med dina värden.
+Ange "http://127.0.0.1:3000/api/auth/google/callback" som redirect URI på Google Auth Platform.
 
 > ⚠️ Skriv aldrig in riktiga nycklar i `.env.example` – den filen checkas in och syns för alla.
 

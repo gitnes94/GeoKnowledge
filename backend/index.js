@@ -5,6 +5,7 @@ const cors = require('cors')
 
 const pool = require('./db')
 const authRoutes = require('./auth')
+const usersRoutes = require('./users')
 
 const app = express()
 
@@ -12,6 +13,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cors())
 app.use('/api/auth', authRoutes)
+app.use('/api/users', usersRoutes)
 
 app.get('/api/health', async (req, res) => {
     try {
