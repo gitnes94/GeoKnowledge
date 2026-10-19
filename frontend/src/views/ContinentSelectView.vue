@@ -37,13 +37,23 @@ function selectContinent(continent) {
 }
 
 function startQuiz() {
-  if (selectedContinent.value) {
-        // Navigera dynamiskt baserat på quizType (t.ex. /quiz/shape/play eller /quiz/flag/play)
-    router.push({
-      path: `/quiz/${quizType.value}/play`,
-      query: { continent: selectedContinent.value.id }
-    })
+  if (!selectedContinent.value) return
+
+  // Tillåt endast 'shape' och 'flag'
+  const validTypes = ['shape', 'flag']
+  const type = quizType.value
+
+  if (!validTypes.includes(type)) {
+    // Om typen är okänd, skicka till quiz-startsidan istället
+    router.push('/quiz')
+    return
   }
+
+  // Om allt stämmer, navigera till rätt quiz-vy med vald kontinent
+  router.push({
+    path: `/quiz/${type}/play`,
+    query: { continent: selectedContinent.value.id }
+  })
 }
 </script>
 
