@@ -19,7 +19,7 @@ const router = createRouter({
       component: QuizSelectView,
     },
     {
-      path: '/quiz/shape/select',
+      path: '/quiz/:type/select',
       name: 'continent-select',
       component: ContinentSelectView,
     },
@@ -29,7 +29,7 @@ const router = createRouter({
       component: ShapeQuizView,
     },
     {
-      path: '/quiz/flag',
+      path: '/quiz/flag/play',
       name: 'flag-quiz',
       component: FlagQuizView,
     }
