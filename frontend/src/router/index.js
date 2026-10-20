@@ -5,7 +5,7 @@ import ShapeQuizView from '../views/ShapeQuizView.vue';
 import FlagQuizView from '../views/FlagQuizView.vue';
 import AuthSuccess from '../views/AuthSuccess.vue';
 import Login from '../views/Login.vue';
-
+import ContinentSelectView from '../views/ContinentSelectView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,12 +21,17 @@ const router = createRouter({
       component: QuizSelectView,
     },
     {
-      path: '/quiz/shape',
+      path: '/quiz/:type/select',
+      name: 'continent-select',
+      component: ContinentSelectView,
+    },
+    {
+      path: '/quiz/shape/play',
       name: 'shape-quiz',
       component: ShapeQuizView,
     },
     {
-      path: '/quiz/flag',
+      path: '/quiz/flag/play',
       name: 'flag-quiz',
       component: FlagQuizView,
     },
@@ -39,7 +44,7 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: Login 
-    },
+    }
   ]
 });
 

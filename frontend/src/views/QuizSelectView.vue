@@ -14,14 +14,14 @@ const QUIZ_TYPES = [
     name: 'Konturquiz',
     description: 'Känn igen länder utifrån deras form.',
     icon: '🗺️',
-    route: '/quiz/shape',
+    route: '/quiz/shape/select',
   },
   {
     id: 'flag',
     name: 'Flaggquiz',
     description: 'Känn igen länder utifrån deras flagga.',
     icon: '🏳️',
-    route: '/quiz/flag',
+    route: '/quiz/flag/select',
   },
 ]
 
