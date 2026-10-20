@@ -21,7 +21,7 @@ const QUIZ_TYPES = [
     name: 'Flaggquiz',
     description: 'Känn igen länder utifrån deras flagga.',
     icon: '🏳️',
-    route: '/quiz/flag',
+    route: '/quiz/flag/select',
   },
 ]
 

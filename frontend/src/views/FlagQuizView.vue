@@ -1,10 +1,11 @@
 <script setup>
 import { ref, shallowRef, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { loadWorld } from '../services/countries.js'
-import { createQuestions } from '../services/quiz.js'
+import { createQuestions, CONTINENTS } from '../services/quiz.js'
 import QuizRunner from '../components/QuizRunner.vue'
 
+const route = useRoute()
 // Hur många frågor ett quiz har
 const QUESTION_COUNT = 10
 
@@ -41,7 +42,12 @@ function flagUrl(id) {
 
 // Startar en ny omgång med nya slumpade frågor
 function startQuiz() {
-  questions.value = createQuestions(world.value, QUESTION_COUNT)
+  const queryContinent = route.query.continent
+  const selectedContinent = Object.keys(CONTINENTS).includes(queryContinent)
+    ? queryContinent
+    : 'World'
+
+  questions.value = createQuestions(world.value, QUESTION_COUNT, selectedContinent)
   result.value = null
   round.value++
 }
