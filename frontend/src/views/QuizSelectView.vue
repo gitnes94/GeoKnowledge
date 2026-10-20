@@ -14,7 +14,7 @@ const QUIZ_TYPES = [
     name: 'Konturquiz',
     description: 'Känn igen länder utifrån deras form.',
     icon: '🗺️',
-    route: '/quiz/shape',
+    route: '/quiz/shape/select',
   },
   {
     id: 'flag',
