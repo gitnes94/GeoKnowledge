@@ -3,6 +3,8 @@ import { ref, shallowRef, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { loadWorld, loadCountryDetail } from '../services/countries.js'
 import { createQuestions, CONTINENTS } from '../services/quiz.js'
+import { saveResult } from '../services/results.js'
+import { useAuthStore } from '../services/auth'
 import QuizRunner from '../components/QuizRunner.vue'
 import CountryShape from '../components/CountryShape.vue'
 
@@ -29,6 +31,24 @@ const round = ref(0)
 // Felmeddelande om datan inte gick att ladda
 const error = ref(null)
 
+// Vilken quiztyp det här är – sparas med resultatet
+const QUIZ_TYPE = 'shape'
+
+// Världsdelen quizet spelas för, t.ex. 'Europe' – sparas med resultatet
+const continent = ref('World')
+
+// Inloggningen. authStore.token finns bara om användaren är inloggad.
+const authStore = useAuthStore()
+
+// Hur det gick att spara resultatet:
+//   'idle'          – inget sparat än
+//   'saving'        – skickar till backenden
+//   'saved'         – sparat
+//   'not-logged-in' – inte inloggad, inget skickas
+//   'expired'       – inloggningen har gått ut (401)
+//   'error'         – något annat gick fel
+const saveStatus = ref('idle')
+
 // Hittar landets form (GeoJSON-feature) utifrån dess id.
 // Använder den detaljerade formen om den hunnit laddas, annars den enkla.
 function findFeature(id) {
@@ -42,18 +62,41 @@ function startQuiz() {
   const queryContinent = route.query.continent
 
   // Validera att kontinenten finns med i CONTINENTS-objektet, annars 'World'
-  const selectedContinent = Object.keys(CONTINENTS).includes(queryContinent)
+  continent.value = Object.keys(CONTINENTS).includes(queryContinent)
     ? queryContinent
     : 'World'
-    
-  questions.value = createQuestions(world.value, QUESTION_COUNT, selectedContinent)
+
+  questions.value = createQuestions(world.value, QUESTION_COUNT, continent.value)
   result.value = null
+  saveStatus.value = 'idle'
   round.value++
 }
 
-// QuizRunner skickar { correct_count, total } när sista frågan är besvarad
-function onFinished(quizResult) {
+// QuizRunner skickar { correct_count, total } när sista frågan är besvarad.
+// Resultatet visas direkt och sparas sedan i backenden om användaren är inloggad.
+async function onFinished(quizResult) {
   result.value = quizResult
+
+  // Inte inloggad: quizet fungerar ändå, men inget sparas
+  if (!authStore.token) {
+    saveStatus.value = 'not-logged-in'
+    return
+  }
+
+  saveStatus.value = 'saving'
+  try {
+    await saveResult(authStore.token, {
+      quiz_type: QUIZ_TYPE,
+      region: continent.value,
+      correct_count: quizResult.correct_count,
+      total: quizResult.total,
+    })
+    saveStatus.value = 'saved'
+  } catch (e) {
+    console.error(e)
+    // 401 = token saknas, är ogiltig eller har gått ut
+    saveStatus.value = e.status === 401 ? 'expired' : 'error'
+  }
 }
 
 onMounted(async () => {
@@ -85,6 +128,19 @@ onMounted(async () => {
     <div v-else-if="result" class="finished">
       <h2>Klart!</h2>
       <p class="final-score">{{ result.correct_count }} av {{ result.total }} rätt</p>
+
+      <!-- Visar om resultatet sparades -->
+      <p v-if="saveStatus === 'saving'" class="save-status">Sparar resultatet…</p>
+      <p v-else-if="saveStatus === 'saved'" class="save-status success">✓ Resultatet är sparat</p>
+      <p v-else-if="saveStatus === 'not-logged-in'" class="save-status">
+        <RouterLink to="/login">Logga in</RouterLink> för att spara dina resultat.
+      </p>
+      <p v-else-if="saveStatus === 'expired'" class="save-status warning">
+        Din inloggning har gått ut. <RouterLink to="/login">Logga in igen</RouterLink> för att spara.
+      </p>
+      <p v-else-if="saveStatus === 'error'" class="save-status warning">
+        Resultatet kunde inte sparas just nu.
+      </p>
       <div class="actions">
         <button class="primary" @click="startQuiz">Spela igen</button>
         <RouterLink to="/quiz" class="secondary">Välj ett annat quiz</RouterLink>
@@ -172,5 +228,25 @@ h2 {
 .secondary {
   color: var(--primary-green, #1b4d3e);
   background: #ffffff;
+}
+
+/* Meddelandet om resultatet sparades */
+.save-status {
+  margin: 0.75rem 0 0;
+  font-size: 0.95rem;
+}
+
+.save-status.success {
+  color: #2f9e4f;
+  font-weight: 700;
+}
+
+.save-status.warning {
+  color: #b5452f;
+}
+
+.save-status a {
+  color: inherit;
+  font-weight: 700;
 }
 </style>
