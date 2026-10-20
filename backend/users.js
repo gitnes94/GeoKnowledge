@@ -8,10 +8,10 @@ router.post('/register', async (req, res) => {
     const { username, email, password } = req.body;
 
     // 1. Validate required fields
-    if (!username || !email) {
+    if (!username || !email || !password) {
         return res.status(400).json({ 
             error: 'Bad Request', 
-            message: 'Username and email are required.' 
+            message: 'Username, email and password are required.' 
         });
     }
 
@@ -50,6 +50,12 @@ router.post('/register', async (req, res) => {
         });
 
     } catch (err) {
+        if (err.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({
+                error: 'Conflict',
+                message: 'A user with this email already exists.'
+            });
+        }
         console.error('Database error during user registration:', err);
         return res.status(500).json({ 
             error: 'Internal Server Error', 
