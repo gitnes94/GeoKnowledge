@@ -5,8 +5,8 @@ export const useAuthStore = defineStore('auth', () => {
     const token = ref(localStorage.getItem('token') || null);
     const user = ref(JSON.parse(localStorage.getItem('user')) || null);
 
-    // Inloggad = det finns en token
-    const isLoggedIn = computed(() => token.value !== null);
+    // Inloggad = det finns en användbar token
+    const isLoggedIn = computed(() => Boolean(token.value));
 
     // Set token and optionally user profile after successful login
     function setToken(newToken) {
