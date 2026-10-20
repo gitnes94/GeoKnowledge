@@ -1,4 +1,16 @@
-<script setup></script>
+<script setup>
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/services/auth'
+
+const router = useRouter()
+const authStore = useAuthStore()
+
+// Loggar ut och skickar användaren till startsidan
+function logout() {
+  authStore.logout()
+  router.push('/')
+}
+</script>
 
 <template>
     
@@ -16,6 +28,13 @@
             <router-link to="/quiz" class="nav-button">
             Välj Quiz
             </router-link>
+
+          <router-link v-if="!authStore.isLoggedIn" to="/login" class="nav-button">
+            Logga in
+          </router-link>
+          <button v-else class="nav-button" @click="logout">
+            Logga ut
+          </button>
         </nav>
 
     </header>
@@ -90,6 +109,10 @@ img {
 }
 .nav-button .icon {
   font-size: 1.3rem;
+}
+button.nav-button {
+  font-family: inherit;
+  cursor: pointer;
 }
 
 /* Desktop*/
