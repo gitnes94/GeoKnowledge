@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('./db');
+const { xpForResult, getLevel, getUserXp } = require('./xp');
 
 // Tillåtna värden – samma som frontenden använder
 const QUIZ_TYPES = ['shape', 'flag'];
@@ -26,13 +27,22 @@ router.post('/', async (req, res) => {
     }
 
     try {
-        // 2. Spara. user_id tas från token – ALDRIG från req.body
+        // 2. Hämta XP före sparningen, så att vi kan se om användaren går upp en nivå
+        const xpBefore = await getUserXp(req.user.id);
+
+        // 3. Spara. user_id tas från token – ALDRIG från req.body
         const [result] = await pool.query(
             'INSERT INTO results (user_id, quiz_type, region, correct_count, total) VALUES (?, ?, ?, ?, ?)',
             [req.user.id, quiz_type, region, correct_count, total]
         );
 
-        // 3. Svara med det sparade resultatet
+        // 4. Räkna ut XP efter sparningen
+        const xpGained = xpForResult(correct_count);
+        const xpTotal = xpBefore + xpGained;
+        const levelBefore = getLevel(xpBefore).level;
+        const progress = getLevel(xpTotal);
+
+        // 5. Svara med det sparade resultatet och den nya XP:n
         return res.status(201).json({
             message: 'Result saved.',
             result: {
@@ -42,6 +52,12 @@ router.post('/', async (req, res) => {
                 region,
                 correct_count,
                 total
+            },
+            xp: {
+                gained: xpGained,
+                total: xpTotal,
+                leveledUp: progress.level > levelBefore,
+                ...progress
             }
         });
     } catch (err) {

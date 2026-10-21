@@ -6,6 +6,7 @@ import { createQuestions, CONTINENTS } from '../services/quiz.js'
 import { saveResult } from '../services/results.js'
 import { useAuthStore } from '../services/auth'
 import QuizRunner from '../components/QuizRunner.vue'
+import XpBar from '../components/XpBar.vue'
 
 const route = useRoute()
 // Hur många frågor ett quiz har
@@ -51,6 +52,9 @@ const authStore = useAuthStore()
 //   'error'         – något annat gick fel
 const saveStatus = ref('idle')
 
+// XP från backenden efter sparningen: { gained, total, level, leveledUp, ... }
+const xp = ref(null)
+
 // Tar fram flaggbildens adress för ett land utifrån dess id.
 // Flaggorna ligger i public/flags/ (kopierade med npm run copy-flags) och
 // heter som landets tvåbokstavskod med små bokstäver, t.ex. /flags/fr.svg.
@@ -70,6 +74,7 @@ function startQuiz() {
   questions.value = createQuestions(world.value, QUESTION_COUNT, continent.value)
   result.value = null
   saveStatus.value = 'idle'
+  xp.value = null
   round.value++
 }
 
@@ -86,12 +91,13 @@ async function onFinished(quizResult) {
 
   saveStatus.value = 'saving'
   try {
-    await saveResult(authStore.token, {
+    const saved = await saveResult(authStore.token, {
       quiz_type: QUIZ_TYPE,
       region: continent.value,
       correct_count: quizResult.correct_count,
       total: quizResult.total,
     })
+    xp.value = saved.xp
     saveStatus.value = 'saved'
   } catch (e) {
     console.error(e)
@@ -142,6 +148,16 @@ onMounted(async () => {
       <p v-else-if="saveStatus === 'error'" class="save-status warning">
         Resultatet kunde inte sparas just nu.
       </p>
+      <!-- XP och nivå, visas när resultatet har sparats -->
+      <XpBar
+        v-if="xp"
+        :level="xp.level"
+        :xp-into-level="xp.xpIntoLevel"
+        :xp-per-level="xp.xpPerLevel"
+        :gained="xp.gained"
+        :leveled-up="xp.leveledUp"
+      />
+
       <div class="actions">
         <button class="primary" @click="startQuiz">Spela igen</button>
         <RouterLink to="/quiz" class="secondary">Välj ett annat quiz</RouterLink>

@@ -7,6 +7,7 @@ const pool = require('./db')
 const authRoutes = require('./auth')
 const usersRoutes = require('./users')
 const resultsRoutes = require('./results');
+const progressRoutes = require('./progress');
 const { requireAuth } = require('./jwt');
 
 
@@ -18,6 +19,7 @@ app.use(cors())
 app.use('/api/auth', authRoutes)
 app.use('/api/users', usersRoutes)
 app.use('/api/results', requireAuth, resultsRoutes)
+app.use('/api/progress', requireAuth, progressRoutes)
 
 app.get('/api/health', async (req, res) => {
     try {
