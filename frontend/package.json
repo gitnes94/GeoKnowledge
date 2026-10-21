@@ -12,6 +12,7 @@
     "fetch-capitals": "node scripts/fetch-capitals.js"
   },
   "dependencies": {
+    "canvas-confetti": "^1.9.4",
     "d3": "^7.9.0",
     "pinia": "^4.1.0",
     "vue": "^3.5.42",
