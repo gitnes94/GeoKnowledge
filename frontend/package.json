@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "fetch-data": "node scripts/fetch-world.js",
-    "copy-flags": "node scripts/copy-flags.js"
+    "copy-flags": "node scripts/copy-flags.js",
+    "fetch-capitals": "node scripts/fetch-capitals.js"
   },
   "dependencies": {
     "d3": "^7.9.0",
@@ -18,6 +19,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.8",
+    "countries-list": "^3.4.1",
     "flag-icons": "^7.5.0",
     "vite": "^8.2.2",
     "vite-plugin-vue-devtools": "^8.2.1"
