@@ -37,3 +37,33 @@ export function loadCountryDetail() {
     }
     return detailPromise
 }
+
+// ---- Huvudstäder ----
+// public/data/capitals.json skapas med: npm run fetch-capitals
+// Formatet är { "SWE": "Stockholm", "DNK": "Köpenhamn", ... }
+
+const CAPITALS_URL = '/data/capitals.json'
+
+// Laddas bara EN gång, precis som den detaljerade kartdatan
+let capitalsPromise = null
+
+async function fetchCapitals() {
+    const response = await fetch(CAPITALS_URL)
+    if (!response.ok) {
+        throw new Error(`Kunde inte ladda ${CAPITALS_URL} (status ${response.status})`)
+    }
+    return response.json()
+}
+
+// Ger alla huvudstäder. Första anropet startar hämtningen –
+// alla senare anrop får samma hämtning i stället för att ladda filen igen.
+// Misslyckas hämtningen glömmer vi den, så att nästa anrop kan försöka igen.
+export function loadCapitals() {
+    if (capitalsPromise === null) {
+        capitalsPromise = fetchCapitals().catch((error) => {
+            capitalsPromise = null
+            throw error
+        })
+    }
+    return capitalsPromise
+}
