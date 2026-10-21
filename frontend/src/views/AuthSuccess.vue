@@ -15,7 +15,9 @@ onMounted(async () => {
         await router.replace('/login?error=AuthenticationFailed');
         return;
     }
-
+    
+    // Rensa den gamla profilen innan den nya inloggningen sparas.
+    authStore.logout();
     authStore.setToken(token);
 
     try {
