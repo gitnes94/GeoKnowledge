@@ -39,6 +39,8 @@ const countries = computed(() => {
     return props.world.features.map((feature) => ({
         id: feature.properties.id,
         name: feature.properties.name,
+        // Svenskt namn i första hand – läses upp av skärmläsare
+        label: feature.properties.name_sv || feature.properties.name,
         d: pathGenerator(feature),
     }))
 })
@@ -54,9 +56,15 @@ const countries = computed(() => {
       :d="country.d"
       class="country"
       :class="{ selected: country.id === selectedId }"
+      tabindex="0"
+      role="button"
+      :aria-label="country.label"
+      :aria-pressed="country.id === selectedId"
       @mouseenter="emit('hover', country)"
       @mouseleave="emit('hover', null)"
       @click="emit('select', country)"
+      @keydown.enter="emit('select', country)"
+      @keydown.space.prevent="emit('select', country)"
     />
   </svg>
 </template>
@@ -83,6 +91,14 @@ const countries = computed(() => {
 
 .country.selected {
   fill: var(--color-accent);
+}
+
+/* Tydlig markering när ett land har tangentbordsfokus */
+.country:focus-visible {
+  outline: none;
+  fill: var(--color-country-hover);
+  stroke: var(--color-accent);
+  stroke-width: 2;
 }
 
 .ocean {

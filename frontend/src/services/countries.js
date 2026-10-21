@@ -57,9 +57,13 @@ async function fetchCapitals() {
 
 // Ger alla huvudstäder. Första anropet startar hämtningen –
 // alla senare anrop får samma hämtning i stället för att ladda filen igen.
+// Misslyckas hämtningen glömmer vi den, så att nästa anrop kan försöka igen.
 export function loadCapitals() {
     if (capitalsPromise === null) {
-        capitalsPromise = fetchCapitals()
+        capitalsPromise = fetchCapitals().catch((error) => {
+            capitalsPromise = null
+            throw error
+        })
     }
     return capitalsPromise
 }
