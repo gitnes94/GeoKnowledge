@@ -2,25 +2,37 @@
 import { onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/services/auth';
+import { apiFetch } from '@/services/api';
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
-onMounted(() => {
+onMounted(async () => {
     const token = route.query.token;
 
-    if (token) {
-        // Save token to Pinia/LocalStorage
-        authStore.setToken(token);
+    if (typeof token !== 'string' || !token) {
+        await router.replace('/login?error=AuthenticationFailed');
+        return;
+    }
 
-        // (Optional) Decode token or fetch user profile from backend using the token
+    authStore.setToken(token);
 
-        // Redirect to main page
-        router.push('/');
-    } else {
-        // Handle missing token error
-        router.push('/login?error=AuthenticationFailed');
+    try {
+        const response = await apiFetch('/api/auth/me');
+
+        if (!response.ok) {
+            throw new Error(`Kunde inte hämta användarprofilen (${response.status})`);
+        }
+
+        const user = await response.json();
+        authStore.setUser(user);
+
+        await router.replace('/');
+    } catch (error) {
+        console.error('Inloggningen kunde inte slutföras:', error);
+        authStore.logout();
+        await router.replace('/login?error=AuthenticationFailed');
     }
 });
 </script>

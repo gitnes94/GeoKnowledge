@@ -4,7 +4,7 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const pool = require('./db');
 const bcrypt = require('bcrypt');
-const {createToken} = require('./jwt');
+const { createToken, requireAuth } = require('./jwt');
 
 // Configure the Google OAuth2 Strategy
 passport.use(new GoogleStrategy({
@@ -67,5 +67,26 @@ router.get('/google/callback',
         res.redirect(`http://localhost:5173/auth/success?token=${token}`);
     }
 );
+// Route för att hämta användare från databasen och spara i res
+router.get('/me', requireAuth, async (req, res) => {
+    try {
+        const [users] = await pool.query(
+            'SELECT id, username FROM users WHERE id = ?',
+            [req.user.id]
+        );
+
+        if (users.length === 0) {
+            return res.status(404).json({ error: 'Användaren hittades inte' });
+        }
+
+        return res.json({
+            id: users[0].id,
+            username: users[0].username
+        });
+    } catch (err) {
+        console.error('Kunde inte hämta användarprofil:', err);
+        return res.status(500).json({ error: 'Kunde inte hämta användarprofilen' });
+    }
+});
 
 module.exports = router;
