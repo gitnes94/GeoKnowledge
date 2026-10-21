@@ -36,9 +36,10 @@ router.post('/', async (req, res) => {
             [req.user.id, quiz_type, region, correct_count, total]
         );
 
-        // 4. Räkna ut XP efter sparningen
+        // 4. Räkna ut XP efter sparningen. Totalen hämtas på nytt från databasen,
+        //    så att den stämmer även om två resultat sparas samtidigt.
         const xpGained = xpForResult(correct_count);
-        const xpTotal = xpBefore + xpGained;
+        const xpTotal = await getUserXp(req.user.id);
         const levelBefore = getLevel(xpBefore).level;
         const progress = getLevel(xpTotal);
 

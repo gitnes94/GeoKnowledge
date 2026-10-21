@@ -67,8 +67,8 @@ function startQuiz() {
 
   // Validera att kontinenten finns med i CONTINENTS-objektet, annars 'World'
   continent.value = Object.keys(CONTINENTS).includes(queryContinent)
-    ? queryContinent
-    : 'World'
+      ? queryContinent
+      : 'World'
 
   questions.value = createQuestions(world.value, QUESTION_COUNT, continent.value)
   result.value = null
@@ -89,17 +89,24 @@ async function onFinished(quizResult) {
   }
 
   saveStatus.value = 'saving'
+
+  // Vilken omgång resultatet hör till. Hinner användaren klicka "Spela igen"
+  // innan backenden svarat ska det gamla svaret inte visas i den nya omgången.
+  const thisRound = round.value
+
   try {
-    const saved = await saveResult(authStore.token, {
+    const saved = await saveResult({
       quiz_type: QUIZ_TYPE,
       region: continent.value,
       correct_count: quizResult.correct_count,
       total: quizResult.total,
     })
+    if (thisRound !== round.value) return
     xp.value = saved.xp
     saveStatus.value = 'saved'
   } catch (e) {
     console.error(e)
+    if (thisRound !== round.value) return
     // 401 = token saknas, är ogiltig eller har gått ut
     saveStatus.value = e.status === 401 ? 'expired' : 'error'
   }
@@ -149,12 +156,12 @@ onMounted(async () => {
       </p>
       <!-- XP och nivå, visas när resultatet har sparats -->
       <XpBar
-        v-if="xp"
-        :level="xp.level"
-        :xp-into-level="xp.xpIntoLevel"
-        :xp-per-level="xp.xpPerLevel"
-        :gained="xp.gained"
-        :leveled-up="xp.leveledUp"
+          v-if="xp"
+          :level="xp.level"
+          :xp-into-level="xp.xpIntoLevel"
+          :xp-per-level="xp.xpPerLevel"
+          :gained="xp.gained"
+          :leveled-up="xp.leveledUp"
       />
 
       <div class="actions">
