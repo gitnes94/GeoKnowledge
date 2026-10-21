@@ -9,7 +9,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 let callbackActive = true;
 
-onMounted(() => {
+onUnmounted(() => {
     callbackActive = false;
 });
 
