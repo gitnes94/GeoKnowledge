@@ -1,7 +1,22 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useRoute } from 'vue-router';
 
 const isLoading = ref(false);
+
+// Adressen innehåller ?error=... när inloggningen misslyckades
+const route = useRoute();
+
+// Felmeddelande utifrån ?error=... i adressen (null = inget fel)
+const errorMessage = computed(() => {
+  if (!route.query.error) {
+    return null;
+  }
+  if (route.query.error === 'server') {
+    return 'Något gick fel hos oss. Försök igen om en stund.';
+  }
+  return 'Inloggningen misslyckades eller avbröts. Försök igen.'
+});
 
 const loginWithGoogle = () => {
     isLoading.value = true;
@@ -14,6 +29,10 @@ const loginWithGoogle = () => {
         <div class="login-card">
             <h2>Welcome!</h2>
             <p>Please sign in to your profile.</p>
+
+            <p v-if="errorMessage" class="login-error" role="alert">
+              {{ errorMessage }}
+            </p>
             
             <button @click="loginWithGoogle" :disabled="isLoading" class="google-btn">
                 <span v-if="isLoading" class="google-text">Redirecting...</span>
@@ -95,4 +114,11 @@ const loginWithGoogle = () => {
     width: 100%;
     gap: 12px;
 }
+
+.login-card .login-error {
+  color: var(--color-wrong);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
 </style>

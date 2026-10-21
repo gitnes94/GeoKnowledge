@@ -56,7 +56,7 @@ router.get('/google', passport.authenticate('google', { scope: ['profile', 'emai
 
 // Route 2: Google OAuth Callback (Handles the response from Google)
 router.get('/google/callback', 
-    passport.authenticate('google', { session: false, failureRedirect: '/login-failed' }),
+    passport.authenticate('google', { session: false, failureRedirect: 'http://localhost:5173/login?error=google' }),
     (req, res) => {
         // At this point, req.user contains our database user object (either found or newly created)
         
@@ -67,5 +67,12 @@ router.get('/google/callback',
         res.redirect(`http://localhost:5173/auth/success?token=${token}`);
     }
 );
+
+// Fångar fel under inloggningen, tex att databasen inte svarar
+// och skickar användaren tillbaka till inloggningssidan i frontend
+router.use((err, req, res, next) => {
+    console.error('Login failed:', err);
+    res.redirect('http://localhost:5173/login?error=server');
+});
 
 module.exports = router;
