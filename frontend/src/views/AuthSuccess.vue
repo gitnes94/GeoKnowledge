@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted , onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/services/auth';
 import { apiFetch } from '@/services/api';
@@ -7,6 +7,11 @@ import { apiFetch } from '@/services/api';
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+let callbackActive = true;
+
+onMounted(() => {
+    callbackActive = false;
+});
 
 onMounted(async () => {
     const token = route.query.token;
@@ -15,6 +20,8 @@ onMounted(async () => {
         await router.replace('/login?error=AuthenticationFailed');
         return;
     }
+    const isCurrentCallback = () =>
+        callbackActive && authStore.token === token;
     
     // Rensa den gamla profilen innan den nya inloggningen sparas.
     authStore.logout();
@@ -23,15 +30,26 @@ onMounted(async () => {
     try {
         const response = await apiFetch('/api/auth/me');
 
+        if (!isCurrentCallback()) {
+            return;
+        }
+
         if (!response.ok) {
             throw new Error(`Kunde inte hämta användarprofilen (${response.status})`);
         }
 
         const user = await response.json();
+
+        if (!isCurrentCallback()) {
+            return;
+        }
         authStore.setUser(user);
 
         await router.replace('/');
     } catch (error) {
+        if (!isCurrentCallback()) {
+            return;
+        }
         console.error('Inloggningen kunde inte slutföras:', error);
         authStore.logout();
         await router.replace('/login?error=AuthenticationFailed');
