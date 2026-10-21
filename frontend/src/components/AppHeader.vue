@@ -22,6 +22,7 @@ function logout() {
         </router-link>
 
         <nav class="main-nav">
+          
             <router-link to="/menu" class="nav-button">
             <span class="icon">≡</span> Meny
             </router-link>
@@ -33,17 +34,19 @@ function logout() {
             Logga in
           </router-link>
 
-          <!-- Om INLOGGAD: Visa användarens namn/profil och utloggningsknapp -->
-            <div v-else class="user-info-container">
-              <!-- Om din authStore sparar användarnamnet (t.ex. authStore.user.name) -->
-              <span class="welcome-text" v-if="authStore.user">
-                Hej, {{ authStore.user.name || authStore.user.displayName || 'Användare' }}!
-              </span>
+            
           <button v-else class="nav-button" @click="logout">
             Logga ut
           </button>
-            </div>
+          
+           
         </nav>
+        <span
+              v-if="authStore.isLoggedIn && authStore.user && authStore.user.username"
+              class="user-name"
+            >
+                Inloggad som {{ authStore.user.username }}
+              </span>
 
     </header>
 
@@ -127,10 +130,8 @@ button.nav-button {
   gap: 10px;
 }
 
-.welcome-text {
-  font-weight: 600;
-  color: var(--primary-green, #1B4D3E);
-  font-size: 0.95rem;
+.user-name {
+  align-self: center;
   white-space: nowrap;
 }
 
@@ -138,6 +139,7 @@ button.nav-button {
 @media screen and (min-width: 1024px)  {
   .app-header{
   flex-direction: row;
+  flex-wrap: wrap;
   gap: 25px;
   justify-content: center;
   align-items: center;
