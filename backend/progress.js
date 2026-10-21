@@ -1,19 +1,17 @@
-// Hämtar den inloggade användarens XP och nivå från backenden.
-// Används t.ex. av profilsidan för att visa nivån utan att spela ett quiz.
+const express = require('express');
+const router = express.Router();
+const { getUserXp, getLevel } = require('./xp');
 
-import { apiFetch } from '@/services/api'
-
-// Returnerar { xp, level, xpIntoLevel, xpPerLevel }.
-// apiFetch skickar automatiskt med token om användaren är inloggad.
-// Kastar ett fel med error.status satt (t.ex. 401) om något går snett.
-export async function getProgress() {
-    const response = await apiFetch('/api/progress')
-
-    if (!response.ok) {
-        const error = new Error(`Kunde inte hämta XP (status ${response.status})`)
-        error.status = response.status
-        throw error
+// GET /api/progress – den inloggade användarens XP och nivå.
+// requireAuth (i jwt.js) körs före den här routen och sätter req.user.
+router.get('/', async (req, res) => {
+    try {
+        const xp = await getUserXp(req.user.id);
+        return res.json({ xp, ...getLevel(xp) });
+    } catch (err) {
+        console.error('Database error while fetching progress:', err);
+        return res.status(500).json({ error: 'Internal Server Error', message: 'Could not fetch progress.' });
     }
+});
 
-    return response.json()
-}
+module.exports = router;
