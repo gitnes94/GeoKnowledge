@@ -4,7 +4,7 @@ import { useAuthStore } from '@/services/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
-
+console.log("Kollar authStore.user:", authStore.user)
 // Loggar ut och skickar användaren till startsidan
 function logout() {
   authStore.logout()
@@ -22,6 +22,7 @@ function logout() {
         </router-link>
 
         <nav class="main-nav">
+          
             <router-link to="/menu" class="nav-button">
             <span class="icon">≡</span> Meny
             </router-link>
@@ -32,10 +33,20 @@ function logout() {
           <router-link v-if="!authStore.isLoggedIn" to="/login" class="nav-button">
             Logga in
           </router-link>
+
+            
           <button v-else class="nav-button" @click="logout">
             Logga ut
           </button>
+          
+           
         </nav>
+        <span
+              v-if="authStore.isLoggedIn && authStore.user && authStore.user.username"
+              class="user-name"
+            >
+                Inloggad som {{ authStore.user.username }}
+              </span>
 
     </header>
 
@@ -113,12 +124,22 @@ img {
 button.nav-button {
   font-family: inherit;
   cursor: pointer;
+}.user-info-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-name {
+  align-self: center;
+  white-space: nowrap;
 }
 
 /* Desktop*/
 @media screen and (min-width: 1024px)  {
   .app-header{
   flex-direction: row;
+  flex-wrap: wrap;
   gap: 25px;
   justify-content: center;
   align-items: center;
