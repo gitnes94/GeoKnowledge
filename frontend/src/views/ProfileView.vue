@@ -4,7 +4,9 @@ import { ref, onMounted, computed } from 'vue'
 import { getResults } from '../services/results.js'
 import { getProgress } from '../services/progress.js'
 import XpBar from '../components/XpBar.vue'
+import { useAuthStore } from '@/services/auth'
 
+const authStore = useAuthStore()
 const result = ref(null)
 const progress = ref(null)
 const totalAnswers = ref(0)
@@ -55,8 +57,22 @@ function calcPaginatedResult () {
 }
 
 onMounted(async () => {
-    result.value = await getResults()
-    progress.value = await getProgress()
+    const [resultRes, progressRes] = await Promise.allSettled([
+    getResults(),
+    getProgress()
+    ])
+
+    if (resultRes.status === 'fulfilled') {
+        result.value = resultRes.value
+    } else {
+        console.error('Failed to load results:', resultRes.reason)
+    }
+
+    if (progressRes.status === 'fulfilled') {
+        progress.value = progressRes.value
+    } else {
+        console.error('Failed to load progress:', progressRes.reason)
+    }
 
     totalCorrect.value = computed(() => {
         return result.value.reduce((accumulator, currentItem) => {
@@ -108,7 +124,7 @@ onMounted(async () => {
             <div class="pagination-controls">
                 <button type="button" @click="prevPage" :disabled="currentPage === 1">Previous</button>
                 <span>Page {{ currentPage }} of {{ totalPages }}</span>
-                <button type="button" @click="nextPage" :disabled="currentPage === totalPages">Next</button>
+                <button type="button" @click="nextPage" :disabled="currentPage >= totalPages.value">Next</button>
             </div>
         </div>
     </section>
