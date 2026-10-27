@@ -1,9 +1,11 @@
-  <script setup>
-import { ref, computed } from 'vue'
+<script setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 // Komponenten får en lista med frågor från createQuestions i quiz.js
 const props = defineProps({
   questions: {type: Array, required: true},
+  // Tidsgräns för hela quizet i sekunder (null = ingen tidsgräns)
+  timeLimit: { type: Number, default: null }
 })
 
 // Events som komponenten skickar till föräldern
@@ -42,12 +44,21 @@ const streak = computed(() => {
 // true när combon är igång och rätta svar ger bonus
 const comboActive = computed(() => streak.value >= COMBO_START)
 
+// Sekunder kvar på tidsgränsen (null = ingen tidsgräns)
+const secondsLeft = ref(props.timeLimit)
+
+// Id på timern, så att den kan stoppas
+let timerId = null
+
+// Tidpunkten då tiden tar slut (i millisekunder), sätts när timern startar
+let deadline = null
+
 // Frågan som visas just nu
 const currentQuestion = computed(() => props.questions[currentIndex.value])
 
 // Körs när användaren klickar på ett svarsalternativ
 function selectAnswer(option) {
-  if (selectedId.value !== null) {
+  if (selectedId.value !== null || isFinished.value) {
     return
   }
   selectedId.value = option.id
@@ -68,24 +79,65 @@ function isWrong(option) {
   return option.id === selectedId.value && option.id !== currentQuestion.value.correct.id
 }
 
+// Avslutar quizet och skickar resultatet.
+// Används både när sista frågan är klar och när tiden tar slut.
+function finishQuiz() {
+  if (isFinished.value) {
+    return
+  }
+  isFinished.value = true
+  stopTimer()
+  emit('finished', {
+    correct_count: correctCount.value,
+    total: props.questions.length,
+    // Tar tiden slut räknas obesvarade frågor som fel, så att listan
+    // alltid har ett svar per fråga (det kontrollerar backenden)
+    answers: [
+      ...answers.value,
+      ...Array(props.questions.length - answers.value.length).fill(false),
+    ],
+  })
+}
+
 // Körs när användaren klickar på "Nästa"
 function nextQuestion() {
   if (isFinished.value) {
     return
   }
   if (currentIndex.value === props.questions.length - 1) {
-    isFinished.value = true
-    emit('finished', {
-      correct_count: correctCount.value,
-      total: props.questions.length,
-      answers: answers.value,
-    })
+    finishQuiz()
     return
   }
 
   currentIndex.value++
   selectedId.value = null
 }
+
+// Räknar ut hur lång tid som är kvar. När tiden är slut avslutas quizet.
+function tick() {
+  const msLeft = deadline - Date.now()
+  secondsLeft.value = Math.max(0, Math.ceil(msLeft / 1000))
+  if (msLeft <= 0) {
+    finishQuiz()
+  }
+}
+
+// Stoppar nedräkningen
+function stopTimer() {
+  clearInterval(timerId)
+  timerId = null
+}
+
+// Starta nedräkningen när quizet visas, om det finns en tidsgräns
+onMounted(() => {
+  if (props.timeLimit) {
+    deadline = Date.now() + props.timeLimit * 1000
+    timerId = setInterval(tick, 1000)
+  }
+})
+
+// Stoppa nedräkningen när komponenten tas bort (ny omgång eller annan sida)
+onUnmounted(stopTimer)
 
 </script>
 <template>
@@ -103,13 +155,18 @@ function nextQuestion() {
       </div>
 
       <slot :question="currentQuestion"/>
+
+      <p v-if="timeLimit" class="timer" :class="{ urgent: secondsLeft <= 10 }" role="timer">
+        ⏱ {{ secondsLeft }} s
+      </p>
+
       <div class="options">
         <button
             v-for="option in currentQuestion.options"
             :key="option.id"
             class="option"
             :class="{ selected: option.id === selectedId, correct: isCorrect(option), wrong: isWrong(option) }"
-            :disabled="selectedId !== null"
+            :disabled="selectedId !== null || isFinished"
             @click="selectAnswer(option)"
         >
           {{ option.name }}
@@ -174,6 +231,24 @@ function nextQuestion() {
   .streak.active {
     animation: none;
   }
+}
+
+/* Nedräkningen, visas bara när quizet har en tidsgräns */
+.timer {
+  display: inline-block;
+  margin: 0 0 1.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 999px;
+  background: var(--primary-green, #1b4d3e);
+  color: #ffffff;
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* De sista 10 sekunderna blir den röd, så att man ser att tiden snart är slut */
+.timer.urgent {
+  background: var(--color-wrong);
 }
 
 /* Svarsknapparna: två kolumner, en kolumn på smala skärmar */
