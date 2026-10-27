@@ -39,8 +39,8 @@ function selectContinent(continent) {
 function startQuiz() {
   if (!selectedContinent.value) return
 
-  // Tillåt endast 'shape' och 'flag'
-  const validTypes = ['shape', 'flag']
+  // Tillåt bara quiztyper som finns
+  const validTypes = ['shape', 'flag', 'capital']
   const type = quizType.value
 
   if (!validTypes.includes(type)) {
