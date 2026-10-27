@@ -34,33 +34,29 @@ function logout() {
 
         <nav class="main-nav">
           
-            <router-link to="/menu" class="nav-button">
+          <router-link to="/menu" class="nav-button">
             <span class="icon">≡</span> Meny
-            </router-link>
-            <router-link to="/quiz" class="nav-button">
+          </router-link>
+
+          <router-link to="/quiz" class="nav-button">
             Välj Quiz
-            </router-link>
+          </router-link>
 
           <router-link v-if="!authStore.isLoggedIn" to="/login" class="nav-button">
             Logga in
           </router-link>
 
-            
           <button v-else class="nav-button" @click="logout">
             Logga ut
           </button>
-
-          <router-link v-if="authStore.isLoggedIn" to="/profile" class="nav-button">
-            Profil
-          </router-link>
            
         </nav>
         <span
-              v-if="authStore.isLoggedIn && authStore.user && authStore.user.username"
-              class="user-name"
-            >
-                Inloggad som {{ authStore.user.username }}
-              </span>
+          v-if="authStore.isLoggedIn && authStore.user && authStore.user.username"
+          class="user-name"
+        >
+          Inloggad som {{ authStore.user.username }}
+        </span>
 
     </header>
     <p v-if="showLoggedOut" class="logout-message" role="status">

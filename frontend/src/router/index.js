@@ -55,11 +55,6 @@ const router = createRouter({
       component: Login 
     },
     {
-      path: '/profile',
-      name: 'profile',
-      component: ProfileView
-    },
-    {
       path: '/menu',
       name: 'menu',
       component: MenuView
@@ -68,6 +63,11 @@ const router = createRouter({
       path: '/menu/leaderboard',
       name: 'leaderboard',
       component: LeaderboardView
+    },
+    {
+      path: '/menu/profile',
+      name: 'profile',
+      component: ProfileView
     }
   ]
 });

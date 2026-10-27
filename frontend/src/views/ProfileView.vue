@@ -74,23 +74,25 @@ onMounted(async () => {
         console.error('Failed to load progress:', progressRes.reason)
     }
 
-    totalCorrect.value = computed(() => {
-        return result.value.reduce((accumulator, currentItem) => {
-        return accumulator + currentItem.correct_count
-        }, 0) // 0 is the initial value of the accumulator
-    })
+    if (result.value) {
+        totalCorrect.value = computed(() => {
+            return result.value.reduce((accumulator, currentItem) => {
+            return accumulator + currentItem.correct_count
+            }, 0) // 0 is the initial value of the accumulator
+        })
+        
+        totalAnswers.value = computed(() => {
+            return result.value.reduce((accumulator, currentItem) => {
+            return accumulator + currentItem.total
+            }, 0) // 0 is the initial value of the accumulator
+        })
 
-    totalAnswers.value = computed(() => {
-        return result.value.reduce((accumulator, currentItem) => {
-        return accumulator + currentItem.total
-        }, 0) // 0 is the initial value of the accumulator
-    })
+        totalPages.value = computed(() => {
+            return Math.ceil(result.value.length / itemsPerPage.value)
+        })
 
-    totalPages.value = computed(() => {
-        return Math.ceil(result.value.length / itemsPerPage.value)
-    })
-
-    calcPaginatedResult()
+        calcPaginatedResult()
+    }
 })
 </script>
 
