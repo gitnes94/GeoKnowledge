@@ -23,6 +23,13 @@ const QUIZ_TYPES = [
     icon: '🏳️',
     route: '/quiz/flag/select',
   },
+  {
+    id: 'capital',
+    name: 'Huvudstadsquiz',
+    description: 'Känn igen länder utifrån deras huvudstad.',
+    icon: '🏛️',
+    route: '/quiz/capital/select',
+  },
 ]
 
 // id på quiztypen användaren valt, eller null
