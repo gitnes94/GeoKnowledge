@@ -9,6 +9,12 @@ const props = defineProps({
 // Events som komponenten skickar till föräldern
 const emit = defineEmits(['finished'])
 
+// Combo: från 5 rätt i rad ger varje rätt svar 20 % extra XP.
+// Själva XP:n räknas ut i backenden (xp.js) – här visas bara combon.
+// Ändras reglerna där ska siffrorna ändras här också.
+const COMBO_START = 5
+const COMBO_BONUS_PERCENT = 20
+
 // Vilken fråga är vi på (0 = första frågan)
 const currentIndex = ref(0)
 
@@ -21,6 +27,21 @@ const selectedId = ref(null)
 // Blir true när quizet är slut, så att resultatet bara skickas en gång
 const isFinished = ref(false)
 
+// Ett svar per besvarad fråga, i ordning: true = rätt, false = fel
+const answers = ref([])
+
+// Antal rätt i rad just nu (räknas bakifrån tills första felet)
+const streak = computed(() => {
+  let count = 0
+  for (let i = answers.value.length - 1; i >= 0 && answers.value[i]; i--) {
+    count++
+  }
+  return count
+})
+
+// true när combon är igång och rätta svar ger bonus
+const comboActive = computed(() => streak.value >= COMBO_START)
+
 // Frågan som visas just nu
 const currentQuestion = computed(() => props.questions[currentIndex.value])
 
@@ -30,7 +51,9 @@ function selectAnswer(option) {
     return
   }
   selectedId.value = option.id
-  if (option.id === currentQuestion.value.correct.id) {
+  const isRight = option.id === currentQuestion.value.correct.id
+  answers.value.push(isRight)
+  if (isRight) {
     correctCount.value++
   }
 }
@@ -55,6 +78,7 @@ function nextQuestion() {
     emit('finished', {
       correct_count: correctCount.value,
       total: props.questions.length,
+      answers: answers.value,
     })
     return
   }
@@ -68,7 +92,15 @@ function nextQuestion() {
   <div class="quiz-runner">
     <p v-if="!currentQuestion">Inga frågor att visa.</p>
     <template v-else>
-      <p class="progress">Fråga {{ currentIndex + 1 }} av {{ questions.length }}</p>
+      <div class="status-row">
+        <p class="progress">Fråga {{ currentIndex + 1 }} av {{ questions.length }}</p>
+
+        <!-- Combo-räknaren syns från 2 rätt i rad. aria-live läser upp ändringar. -->
+        <p v-if="streak >= 2" class="streak" :class="{ active: comboActive }" aria-live="polite">
+          🔥 {{ streak }} i rad<template v-if="comboActive"> · +{{ COMBO_BONUS_PERCENT }} % XP</template>
+          <template v-else-if="streak === COMBO_START - 1"> · en till för combo!</template>
+        </p>
+      </div>
 
       <slot :question="currentQuestion"/>
       <div class="options">
@@ -105,6 +137,43 @@ function nextQuestion() {
   color: #ffffff;
   font-size: 0.875rem;
   font-weight: 700;
+}
+
+/* Frågeräknaren och combo-räknaren bredvid varandra */
+.status-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.streak {
+  margin: 0;
+  padding: 0.25rem 0.875rem;
+  border-radius: 999px;
+  border: 2px solid #f08c00;
+  color: #a65d00;
+  background: #fff4e0;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+/* Combon är igång: fylld orange och en liten puls */
+.streak.active {
+  color: #ffffff;
+  background: #f08c00;
+  animation: pulse 0.4s ease-out;
+}
+
+@keyframes pulse {
+  from { transform: scale(1.15); }
+  to { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streak.active {
+    animation: none;
+  }
 }
 
 /* Svarsknapparna: två kolumner, en kolumn på smala skärmar */

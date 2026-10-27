@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('./db');
-const { xpForResult, getLevel, getUserXp } = require('./xp');
+const { xpForResult, comboBonus, getLevel, getUserXp } = require('./xp');
 
 // Tillåtna värden – samma som frontenden använder
 const QUIZ_TYPES = ['shape', 'flag'];
@@ -9,8 +9,11 @@ const REGIONS = ['World', 'Europe', 'Asia', 'Africa', 'North America', 'South Am
 
 // POST /api/results – sparar ett quizresultat för den inloggade användaren.
 // requireAuth (i jwt.js) körs före den här routen och sätter req.user.
+//
+// answers (valfritt) är svaren i ordning, t.ex. [true, true, false, ...].
+// Den behövs för att räkna ut combo-bonusen. Utan answers blir bonusen 0.
 router.post('/', async (req, res) => {
-    const { quiz_type, region, correct_count, total } = req.body;
+    const { quiz_type, region, correct_count, total, answers } = req.body;
 
     // 1. Validera det som skickats in
     if (!QUIZ_TYPES.includes(quiz_type)) {
@@ -25,6 +28,19 @@ router.post('/', async (req, res) => {
     if (!Number.isInteger(correct_count) || correct_count < 0 || correct_count > total) {
         return res.status(400).json({ error: 'Bad Request', message: 'correct_count must be between 0 and total.' });
     }
+    // answers måste stämma med resultatet, annars kan man fuska till sig bonus
+    if (answers !== undefined) {
+        const isValidList =
+            Array.isArray(answers) &&
+            answers.length === total &&
+            answers.every((answer) => typeof answer === 'boolean');
+        if (!isValidList || answers.filter(Boolean).length !== correct_count) {
+            return res.status(400).json({ error: 'Bad Request', message: 'answers must match total and correct_count.' });
+        }
+    }
+
+    // Bonusen räknas ut här i backenden – frontenden får inte bestämma XP:n själv
+    const bonusXp = answers ? comboBonus(answers) : 0;
 
     try {
         // 2. Hämta XP före sparningen, så att vi kan se om användaren går upp en nivå
@@ -32,13 +48,13 @@ router.post('/', async (req, res) => {
 
         // 3. Spara. user_id tas från token – ALDRIG från req.body
         const [result] = await pool.query(
-            'INSERT INTO results (user_id, quiz_type, region, correct_count, total) VALUES (?, ?, ?, ?, ?)',
-            [req.user.id, quiz_type, region, correct_count, total]
+            'INSERT INTO results (user_id, quiz_type, region, correct_count, total, bonus_xp) VALUES (?, ?, ?, ?, ?, ?)',
+            [req.user.id, quiz_type, region, correct_count, total, bonusXp]
         );
 
         // 4. Räkna ut XP efter sparningen. Totalen hämtas på nytt från databasen,
         //    så att den stämmer även om två resultat sparas samtidigt.
-        const xpGained = xpForResult(correct_count);
+        const xpGained = xpForResult(correct_count) + bonusXp;
         const xpTotal = await getUserXp(req.user.id);
         const levelBefore = getLevel(xpBefore).level;
         const progress = getLevel(xpTotal);
@@ -52,10 +68,12 @@ router.post('/', async (req, res) => {
                 quiz_type,
                 region,
                 correct_count,
-                total
+                total,
+                bonus_xp: bonusXp
             },
             xp: {
-                gained: xpGained,
+                gained: xpGained,  // all XP från quizet, inklusive bonus
+                bonus: bonusXp,    // varav combo-bonus
                 total: xpTotal,
                 leveledUp: progress.level > levelBefore,
                 ...progress
@@ -68,7 +86,7 @@ router.post('/', async (req, res) => {
 });
 
 // Kolumnerna som skickas tillbaka till frontenden
-const RESULT_COLUMNS = 'id, quiz_type, region, correct_count, total, created_at';
+const RESULT_COLUMNS = 'id, quiz_type, region, correct_count, total, bonus_xp, created_at';
 
 // GET /api/results – den inloggade användarens resultat, senaste först
 router.get('/', async (req, res) => {
