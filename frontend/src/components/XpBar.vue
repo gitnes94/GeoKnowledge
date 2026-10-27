@@ -10,6 +10,8 @@ const props = defineProps({
   xpPerLevel: { type: Number, required: true },
   // XP från quizet som nyss spelades (visas bara om det skickas in)
   gained: { type: Number, default: null },
+  // Hur mycket av gained som var combo-bonus (5 rätt i rad)
+  bonus: { type: Number, default: 0 },
   // true om användaren gick upp en nivå av quizet
   leveledUp: { type: Boolean, default: false },
 })
@@ -37,7 +39,10 @@ onMounted(() => {
 <template>
   <div class="xp-bar">
     <p v-if="leveledUp" class="level-up">🎉 Nivå upp!</p>
-    <p v-if="gained !== null" class="gained">+{{ gained }} XP</p>
+    <p v-if="gained !== null" class="gained">
+      +{{ gained }} XP
+      <span v-if="bonus > 0" class="bonus">(varav {{ bonus }} combo-bonus 🔥)</span>
+    </p>
 
     <div class="row">
       <span class="level">Nivå {{ level }}</span>
@@ -93,6 +98,12 @@ onMounted(() => {
   font-size: 1.1rem;
   font-weight: 700;
   color: #2f9e4f;
+}
+
+.bonus {
+  display: block;
+  font-size: 0.9rem;
+  color: #a65d00;
 }
 
 .row {
