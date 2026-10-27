@@ -4,7 +4,7 @@ const pool = require('./db');
 const { xpForResult, comboBonus, getLevel, getUserXp } = require('./xp');
 
 // Tillåtna värden – samma som frontenden använder
-const QUIZ_TYPES = ['shape', 'flag'];
+const QUIZ_TYPES = ['shape', 'flag', 'capital'];
 const REGIONS = ['World', 'Europe', 'Asia', 'Africa', 'North America', 'South America', 'Oceania'];
 
 // POST /api/results – sparar ett quizresultat för den inloggade användaren.
