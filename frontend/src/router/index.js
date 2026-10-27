@@ -7,6 +7,8 @@ import CapitalQuizView from '../views/CapitalQuizView.vue';
 import AuthSuccess from '../views/AuthSuccess.vue';
 import Login from '../views/Login.vue';
 import ContinentSelectView from '../views/ContinentSelectView.vue';
+import MenuView from '@/views/MenuView.vue';
+import LeaderboardView from '@/views/LeaderboardView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -50,6 +52,16 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: Login 
+    },
+    {
+      path: '/menu',
+      name: 'menu',
+      component: MenuView
+    },
+    {
+      path: '/menu/leaderboard',
+      name: 'leaderboard',
+      component: LeaderboardView
     }
   ]
 });
