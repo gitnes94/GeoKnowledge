@@ -29,12 +29,15 @@ const secondsLeft = ref(props.timeLimit)
 // Id på timern, så att den kan stoppas
 let timerId = null
 
+// Tidpunkten då tiden tar slut (i millisekunder), sätts när timern startar
+let deadline = null
+
 // Frågan som visas just nu
 const currentQuestion = computed(() => props.questions[currentIndex.value])
 
 // Körs när användaren klickar på ett svarsalternativ
 function selectAnswer(option) {
-  if (selectedId.value !== null) {
+  if (selectedId.value !== null || isFinished.value) {
     return
   }
   selectedId.value = option.id
@@ -81,10 +84,11 @@ function nextQuestion() {
   selectedId.value = null
 }
 
-// Räknar ner en sekund. När tiden är slut avslutas quizet.
+// Räknar ut hur lång tid som är kvar. När tiden är slut avslutas quizet.
 function tick() {
-  secondsLeft.value--
-  if (secondsLeft.value <= 0) {
+  const msLeft = deadline - Date.now()
+  secondsLeft.value = Math.max(0, Math.ceil(msLeft / 1000))
+  if (msLeft <= 0) {
     finishQuiz()
   }
 }
@@ -98,6 +102,7 @@ function stopTimer() {
 // Starta nedräkningen när quizet visas, om det finns en tidsgräns
 onMounted(() => {
   if (props.timeLimit) {
+    deadline = Date.now() + props.timeLimit * 1000
     timerId = setInterval(tick, 1000)
   }
 })
@@ -124,7 +129,7 @@ onUnmounted(stopTimer)
             :key="option.id"
             class="option"
             :class="{ selected: option.id === selectedId, correct: isCorrect(option), wrong: isWrong(option) }"
-            :disabled="selectedId !== null"
+            :disabled="selectedId !== null || isFinished"
             @click="selectAnswer(option)"
         >
           {{ option.name }}
