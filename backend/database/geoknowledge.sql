@@ -15,6 +15,7 @@ CREATE TABLE results
     region        VARCHAR(30) NOT NULL,
     correct_count INT         NOT NULL,
     total         INT         NOT NULL,
+    bonus_xp      INT         NOT NULL DEFAULT 0, -- combo-bonus (5 rätt i rad)
     created_at    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_results_user

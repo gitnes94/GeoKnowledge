@@ -1,13 +1,25 @@
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/services/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
-// Loggar ut och skickar användaren till startsidan
+
+// Blir true en kort stund efter utloggning, så att meddelandet syns
+const showLoggedOut = ref(false)
+
+console.log("Kollar authStore.user:", authStore.user)
+// Loggar ut, skickar användaren till startsidan och visar ett kort meddelande
 function logout() {
   authStore.logout()
   router.push('/')
+
+  // Visa "Du är nu utloggad" i 3 sekunder
+  showLoggedOut.value = true
+  setTimeout(() => {
+    showLoggedOut.value = false
+  }, 3000)
 }
 </script>
 
@@ -51,6 +63,9 @@ function logout() {
               </span>
 
     </header>
+    <p v-if="showLoggedOut" class="logout-message" role="status">
+      Du är nu utloggad
+    </p>
 
 </template>
 
@@ -135,6 +150,23 @@ button.nav-button {
 .user-name {
   align-self: center;
   white-space: nowrap;
+}
+
+/* Kort meddelande efter utloggning. Ligger fast högst upp i fönstret,
+   så att det syns på alla sidor och inte knuffar ner innehållet */
+.logout-message {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  margin: 0;
+  padding: 0.75rem 1.5rem;
+  background: var(--primary-green, #1b4d3e);
+  color: #ffffff;
+  font-weight: bold;
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(27, 77, 62, 0.25);
 }
 
 /* Desktop*/
