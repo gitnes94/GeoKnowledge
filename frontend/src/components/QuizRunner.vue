@@ -61,6 +61,11 @@ function selectAnswer(option) {
   if (selectedId.value !== null || isFinished.value) {
     return
   }
+  // Tiden kan ha tagit slut mellan två tick – då räknas inte svaret
+  if (deadline && Date.now() >= deadline) {
+    finishQuiz()
+    return
+  }
   selectedId.value = option.id
   const isRight = option.id === currentQuestion.value.correct.id
   answers.value.push(isRight)
