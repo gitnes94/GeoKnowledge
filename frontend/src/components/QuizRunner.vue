@@ -1,9 +1,11 @@
-  <script setup>
-import { ref, computed } from 'vue'
+<script setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 // Komponenten får en lista med frågor från createQuestions i quiz.js
 const props = defineProps({
   questions: {type: Array, required: true},
+  // Tidsgräns för hela quizet i sekunder (null = ingen tidsgräns)
+  timeLimit: { type: Number, default: null }
 })
 
 // Events som komponenten skickar till föräldern
@@ -20,6 +22,12 @@ const selectedId = ref(null)
 
 // Blir true när quizet är slut, så att resultatet bara skickas en gång
 const isFinished = ref(false)
+
+// Sekunder kvar på tidsgränsen (null = ingen tidsgräns)
+const secondsLeft = ref(props.timeLimit)
+
+// Id på timern, så att den kan stoppas
+let timerId = null
 
 // Frågan som visas just nu
 const currentQuestion = computed(() => props.questions[currentIndex.value])
@@ -45,23 +53,57 @@ function isWrong(option) {
   return option.id === selectedId.value && option.id !== currentQuestion.value.correct.id
 }
 
+// Avslutar quizet och skickar resultatet.
+// Används både när sista frågan är klar och när tiden tar slut.
+function finishQuiz() {
+  if (isFinished.value) {
+    return
+  }
+  isFinished.value = true
+  stopTimer()
+  emit('finished', {
+    correct_count: correctCount.value,
+    total: props.questions.length,
+  })
+}
+
 // Körs när användaren klickar på "Nästa"
 function nextQuestion() {
   if (isFinished.value) {
     return
   }
   if (currentIndex.value === props.questions.length - 1) {
-    isFinished.value = true
-    emit('finished', {
-      correct_count: correctCount.value,
-      total: props.questions.length,
-    })
+    finishQuiz()
     return
   }
 
   currentIndex.value++
   selectedId.value = null
 }
+
+// Räknar ner en sekund. När tiden är slut avslutas quizet.
+function tick() {
+  secondsLeft.value--
+  if (secondsLeft.value <= 0) {
+    finishQuiz()
+  }
+}
+
+// Stoppar nedräkningen
+function stopTimer() {
+  clearInterval(timerId)
+  timerId = null
+}
+
+// Starta nedräkningen när quizet visas, om det finns en tidsgräns
+onMounted(() => {
+  if (props.timeLimit) {
+    timerId = setInterval(tick, 1000)
+  }
+})
+
+// Stoppa nedräkningen när komponenten tas bort (ny omgång eller annan sida)
+onUnmounted(stopTimer)
 
 </script>
 <template>
@@ -71,6 +113,11 @@ function nextQuestion() {
       <p class="progress">Fråga {{ currentIndex + 1 }} av {{ questions.length }}</p>
 
       <slot :question="currentQuestion"/>
+
+      <p v-if="timeLimit" class="timer" :class="{ urgent: secondsLeft <= 10 }" role="timer">
+        ⏱ {{ secondsLeft }} s
+      </p>
+
       <div class="options">
         <button
             v-for="option in currentQuestion.options"
@@ -105,6 +152,25 @@ function nextQuestion() {
   color: #ffffff;
   font-size: 0.875rem;
   font-weight: 700;
+}
+
+
+/* Nedräkningen, visas bara när quizet har en tidsgräns */
+.timer {
+  display: inline-block;
+  margin: 0 0 1.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 999px;
+  background: var(--primary-green, #1b4d3e);
+  color: #ffffff;
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* De sista 10 sekunderna blir den röd, så att man ser att tiden snart är slut */
+.timer.urgent {
+  background: var(--color-wrong);
 }
 
 /* Svarsknapparna: två kolumner, en kolumn på smala skärmar */
