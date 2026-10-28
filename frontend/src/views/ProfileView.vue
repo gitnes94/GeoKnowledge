@@ -124,9 +124,9 @@ onMounted(async () => {
             </ul>
 
             <div class="pagination-controls">
-                <button type="button" @click="prevPage" :disabled="currentPage === 1">Previous</button>
-                <span>Page {{ currentPage }} of {{ totalPages }}</span>
-                <button type="button" @click="nextPage" :disabled="currentPage >= totalPages.value">Next</button>
+                <button type="button" @click="prevPage" :disabled="currentPage === 1">Föregående</button>
+                <span>Sida {{ currentPage }} av {{ totalPages }}</span>
+                <button type="button" @click="nextPage" :disabled="currentPage >= totalPages.value">Nästa</button>
             </div>
         </div>
     </section>
@@ -183,6 +183,14 @@ onMounted(async () => {
     justify-content: center;
     margin-top: 15px;
     gap: 5px;
+}
+
+.pagination-controls button {
+    font-weight: bold;
+    background-color: #41ac5a40;
+    border-radius: 24px;
+    border-color: #1B4D3E;
+    box-shadow: 0 10px 25px rgba(27, 77, 62, 0.12); 
 }
 
 ul {
