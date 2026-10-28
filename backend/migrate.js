@@ -25,6 +25,12 @@ async function migrate() {
         await pool.query('ALTER TABLE results ADD COLUMN bonus_xp INT NOT NULL DEFAULT 0')
         console.log('Databasen uppdaterad: kolumnen results.bonus_xp lades till')
     }
+
+    // Quiz på tid
+    if (!(await columnExists('results', 'timed'))) {
+        await pool.query('ALTER TABLE results ADD COLUMN timed BOOLEAN NOT NULL DEFAULT FALSE')
+        console.log('Databasen uppdaterad: kolumnen results.timed lades till')
+    }
 }
 
 module.exports = migrate
