@@ -131,6 +131,8 @@ async function onFinished(quizResult) {
       correct_count: quizResult.correct_count,
       total: quizResult.total,
       timed: timeLimit.value !== null,
+      completed: quizResult.completed,
+      seconds_left: quizResult.seconds_left,
       answers: quizResult.answers, // behövs för combo-bonusen
       // Landet som var rätt svar på varje fråga – för mästartroféerna
       country_ids: questions.value.map((question) => question.correct.id),
@@ -207,6 +209,7 @@ onMounted(async () => {
           :xp-per-level="xp.xpPerLevel"
           :gained="xp.gained"
           :bonus="xp.bonus"
+          :timed-bonus="xp.timedBonus"
           :leveled-up="xp.leveledUp"
       />
 

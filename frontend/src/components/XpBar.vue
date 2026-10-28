@@ -12,6 +12,8 @@ const props = defineProps({
   gained: { type: Number, default: null },
   // Hur mycket av gained som var combo-bonus (5 rätt i rad)
   bonus: { type: Number, default: 0 },
+  // Hur mycket av gained som var bonus för quiz på tid
+  timedBonus: { type: Number, default: 0 },
   // true om användaren gick upp en nivå av quizet
   leveledUp: { type: Boolean, default: false },
 })
@@ -42,6 +44,7 @@ onMounted(() => {
     <p v-if="gained !== null" class="gained">
       +{{ gained }} XP
       <span v-if="bonus > 0" class="bonus">(varav {{ bonus }} combo-bonus 🔥)</span>
+      <span v-if="timedBonus > 0" class="bonus">(varav {{ timedBonus }} tidsbonus ⏱)</span>
     </p>
 
     <div class="row">
