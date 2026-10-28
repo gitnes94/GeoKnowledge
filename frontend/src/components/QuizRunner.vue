@@ -43,7 +43,6 @@ const streak = computed(() => {
 
 // true när combon är igång och rätta svar ger bonus
 const comboActive = computed(() => streak.value >= COMBO_START)
-
 // Sekunder kvar på tidsgränsen (null = ingen tidsgräns)
 const secondsLeft = ref(props.timeLimit)
 
@@ -237,7 +236,6 @@ onUnmounted(stopTimer)
     animation: none;
   }
 }
-
 /* Nedräkningen, visas bara när quizet har en tidsgräns */
 .timer {
   display: inline-block;

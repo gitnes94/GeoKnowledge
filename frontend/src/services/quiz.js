@@ -13,6 +13,12 @@ export const CONTINENTS = {
     Oceania: 'Oceanien',
 }
 
+// Lägen för quizet.
+export const MODES = [
+    { id: 'normal', name: 'Vanligt', timeLimit: null },
+    { id: 'timed', name: '⏱ På tid', timeLimit: 60 },
+]
+
 // Hur många svarsalternativ varje fråga har
 const OPTIONS_PER_QUESTION = 4
 
