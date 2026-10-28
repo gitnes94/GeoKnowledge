@@ -4,7 +4,10 @@ const pool = require('./db');
 const { xpForResult, comboBonus, getLevel, getUserXp } = require('./xp');
 
 // Tillåtna värden – samma som frontenden använder
-const QUIZ_TYPES = ['shape', 'flag', 'capital'];
+const QUIZ_TYPES = ['shape', 'flag', 'capital', 'geomaster'];
+
+// Frågetyperna i GeoMaster. Varje fråga där räknas mot sin egen typs mästartroféer.
+const QUESTION_TYPES = ['shape', 'flag', 'capital'];
 const REGIONS = ['World', 'Europe', 'Asia', 'Africa', 'North America', 'South America', 'Oceania'];
 
 // POST /api/results – sparar ett quizresultat för den inloggade användaren.
@@ -16,8 +19,12 @@ const REGIONS = ['World', 'Europe', 'Asia', 'Africa', 'North America', 'South Am
 // country_ids (valfritt) är landet som var rätt svar på varje fråga, i samma
 // ordning som answers, t.ex. ['SWE', 'FRA', ...]. De länder man svarade rätt
 // på sparas i correct_countries och används för mästartroféerna.
+//
+// question_types (bara GeoMaster) är frågetypen för varje fråga, t.ex.
+// ['flag', 'shape', ...]. Då sparas varje land under sin frågetyp i stället
+// för under 'geomaster', så att en rätt flaggfråga räknas mot flaggtroféerna.
 router.post('/', async (req, res) => {
-    const { quiz_type, region, correct_count, total, answers, country_ids } = req.body;
+    const { quiz_type, region, correct_count, total, answers, country_ids, question_types } = req.body;
 
     // 1. Validera det som skickats in
     if (!QUIZ_TYPES.includes(quiz_type)) {
@@ -55,6 +62,18 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Bad Request', message: 'country_ids must match answers.' });
         }
     }
+    // GeoMaster måste skicka frågetyperna tillsammans med länderna – andra quiz får inte
+    const needsTypes = quiz_type === 'geomaster' && country_ids !== undefined;
+    if (needsTypes || question_types !== undefined) {
+        const isValidTypes =
+            needsTypes &&
+            Array.isArray(question_types) &&
+            question_types.length === total &&
+            question_types.every((type) => QUESTION_TYPES.includes(type));
+        if (!isValidTypes) {
+            return res.status(400).json({ error: 'Bad Request', message: 'question_types must match country_ids.' });
+        }
+    }
 
     // Bonusen räknas ut här i backenden – frontenden får inte bestämma XP:n själv
     const bonusXp = answers ? comboBonus(answers) : 0;
@@ -84,9 +103,10 @@ router.post('/', async (req, res) => {
         // 3b. Spara länderna man svarade rätt på. INSERT IGNORE hoppar över
         //     länder som redan finns, så varje land sparas bara en gång.
         if (country_ids) {
+            // Frågetypen per land: från question_types i GeoMaster, annars quizets typ
             const rows = country_ids
-                .filter((id, i) => answers[i])
-                .map((id) => [req.user.id, quiz_type, id]);
+                .map((id, i) => [req.user.id, question_types ? question_types[i] : quiz_type, id])
+                .filter((row, i) => answers[i]);
             if (rows.length > 0) {
                 await connection.query(
                     'INSERT IGNORE INTO correct_countries (user_id, quiz_type, country_id) VALUES ?',

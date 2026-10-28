@@ -28,6 +28,7 @@ export const QUIZ_TYPES = {
 export const TROPHY_GROUPS = {
   level: 'Nivåer',
   perfect: 'Felfria quiz',
+  geomaster: 'GeoMaster',
   master: 'Mästare – alla länder rätt minst en gång',
 }
 
@@ -75,9 +76,9 @@ export function buildTrophies(stats, world) {
   }
 
   // 2. Felfria quiz
-  const perfectCounts = Object.values(stats.perfect)
-  const perfectTotal = perfectCounts.reduce((sum, count) => sum + count, 0)
-  const perfectTypes = perfectCounts.filter((count) => count > 0).length
+  // Alla felfria quiz räknas, även GeoMaster. "Tre av tre" gäller bara de tre vanliga typerna.
+  const perfectTotal = Object.values(stats.perfect).reduce((sum, count) => sum + count, 0)
+  const perfectTypes = Object.keys(QUIZ_TYPES).filter((type) => stats.perfect[type] > 0).length
   const typeCount = Object.keys(QUIZ_TYPES).length
 
   trophies.push(
@@ -109,7 +110,36 @@ export function buildTrophies(stats, world) {
     }
   )
 
-  // 3. Mästare: alla länder i en världsdel rätt minst en gång, per quiztyp
+  // 3. GeoMaster
+  const journeys = stats.geomaster || { completed: 0, completedWorld: 0 }
+  trophies.push(
+    {
+      id: 'geomaster-1',
+      group: 'geomaster',
+      icon: '🧭',
+      name: 'Ut på resa',
+      description: 'Klara en GeoMaster-resa',
+      unlocked: journeys.completed >= 1,
+    },
+    {
+      id: 'geomaster-perfect',
+      group: 'geomaster',
+      icon: '🛡️',
+      name: 'Utan en skråma',
+      description: 'Klara en resa utan att förlora något liv',
+      unlocked: (stats.perfect.geomaster || 0) >= 1,
+    },
+    {
+      id: 'geomaster-world',
+      group: 'geomaster',
+      icon: '🌐',
+      name: 'Jorden runt',
+      description: 'Klara en resa genom hela världen',
+      unlocked: journeys.completedWorld >= 1,
+    }
+  )
+
+  // 4. Mästare: alla länder i en världsdel rätt minst en gång, per quiztyp
   for (const [type, { name, icon }] of Object.entries(QUIZ_TYPES)) {
     const correct = new Set(stats.correct[type] || [])
 

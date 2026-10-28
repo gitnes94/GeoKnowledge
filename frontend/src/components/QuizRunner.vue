@@ -5,11 +5,15 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 const props = defineProps({
   questions: {type: Array, required: true},
   // Tidsgräns för hela quizet i sekunder (null = ingen tidsgräns)
-  timeLimit: { type: Number, default: null }
+  timeLimit: { type: Number, default: null },
+  // Antal liv: så många fel får man göra innan quizet tar slut (null = inga liv)
+  lives: { type: Number, default: null },
 })
 
 // Events som komponenten skickar till föräldern
-const emit = defineEmits(['finished'])
+//   finished – quizet är slut: { correct_count, total, answers }
+//   answered – en fråga är besvarad: { index, correct } (t.ex. för GeoMaster-kartan)
+const emit = defineEmits(['finished', 'answered'])
 
 // Combo: från 5 rätt i rad ger varje rätt svar 20 % extra XP.
 // Själva XP:n räknas ut i backenden (xp.js) – här visas bara combon.
@@ -41,6 +45,14 @@ const streak = computed(() => {
   return count
 })
 
+// Liv kvar (null om quizet inte har liv)
+const livesLeft = computed(() =>
+  props.lives === null ? null : props.lives - answers.value.filter((answer) => !answer).length
+)
+
+// true när alla liv är slut – då avslutas quizet när man klickar vidare
+const outOfLives = computed(() => livesLeft.value !== null && livesLeft.value <= 0)
+
 // true när combon är igång och rätta svar ger bonus
 const comboActive = computed(() => streak.value >= COMBO_START)
 // Sekunder kvar på tidsgränsen (null = ingen tidsgräns)
@@ -65,12 +77,18 @@ function selectAnswer(option) {
     finishQuiz()
     return
   }
+  // Tiden kan ha tagit slut mellan två tick – då räknas inte svaret
+  if (deadline && Date.now() >= deadline) {
+    finishQuiz()
+    return
+  }
   selectedId.value = option.id
   const isRight = option.id === currentQuestion.value.correct.id
   answers.value.push(isRight)
   if (isRight) {
     correctCount.value++
   }
+  emit('answered', { index: currentIndex.value, correct: isRight })
 }
 
 // Grönt: rätt svar (efter att användaren har svarat)
@@ -108,7 +126,8 @@ function nextQuestion() {
   if (isFinished.value) {
     return
   }
-  if (currentIndex.value === props.questions.length - 1) {
+  // Sista frågan, eller slut på liv: avsluta
+  if (currentIndex.value === props.questions.length - 1 || outOfLives.value) {
     finishQuiz()
     return
   }
@@ -156,6 +175,11 @@ onUnmounted(stopTimer)
           🔥 {{ streak }} i rad<template v-if="comboActive"> · +{{ COMBO_BONUS_PERCENT }} % XP</template>
           <template v-else-if="streak === COMBO_START - 1"> · en till för combo!</template>
         </p>
+
+        <!-- Liv, bara om quizet har liv: fyllda hjärtan för liv kvar, tomma för förlorade -->
+        <p v-if="lives !== null" class="lives" :aria-label="`${livesLeft} av ${lives} liv kvar`">
+          <span v-for="n in lives" :key="n" aria-hidden="true">{{ n <= livesLeft ? '❤️' : '🤍' }}</span>
+        </p>
       </div>
 
       <slot :question="currentQuestion"/>
@@ -181,7 +205,7 @@ onUnmounted(stopTimer)
               class="next"
               :disabled="isFinished"
               @click="nextQuestion">
-        Nästa
+        {{ outOfLives || currentIndex === questions.length - 1 ? 'Se resultat' : 'Nästa' }}
       </button>
     </template>
   </div>
@@ -217,6 +241,17 @@ onUnmounted(stopTimer)
   background: #fff4e0;
   font-size: 0.875rem;
   font-weight: 700;
+}
+
+/* Hjärtan för liv */
+.lives {
+  margin: 0;
+  padding: 0.125rem 0.625rem;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 2px solid rgba(27, 77, 62, 0.15);
+  font-size: 0.875rem;
+  letter-spacing: 0.1em;
 }
 
 /* Combon är igång: fylld orange och en liten puls */
