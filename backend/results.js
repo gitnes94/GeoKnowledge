@@ -59,12 +59,24 @@ router.post('/', async (req, res) => {
     // Bonusen räknas ut här i backenden – frontenden får inte bestämma XP:n själv
     const bonusXp = answers ? comboBonus(answers) : 0;
 
+    // En egen anslutning till databasen, för transaktionen nedan
+    let connection;
+
     try {
         // 2. Hämta XP före sparningen, så att vi kan se om användaren går upp en nivå
         const xpBefore = await getUserXp(req.user.id);
 
-        // 3. Spara. user_id tas från token – ALDRIG från req.body
-        const [result] = await pool.query(
+        // 3. Spara resultatet och länderna i EN transaktion: antingen sparas
+        //    allt eller ingenting. Annars kunde resultatet sparas men länderna
+        //    misslyckas – då får frontenden ett fel, användaren försöker igen
+        //    och resultatet (och XP:n) sparas två gånger.
+        //    En transaktion måste köras på en och samma anslutning, därför
+        //    getConnection i stället för pool.query.
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        // user_id tas från token – ALDRIG från req.body
+        const [result] = await connection.query(
             'INSERT INTO results (user_id, quiz_type, region, correct_count, total, bonus_xp) VALUES (?, ?, ?, ?, ?, ?)',
             [req.user.id, quiz_type, region, correct_count, total, bonusXp]
         );
@@ -76,7 +88,7 @@ router.post('/', async (req, res) => {
                 .filter((id, i) => answers[i])
                 .map((id) => [req.user.id, quiz_type, id]);
             if (rows.length > 0) {
-                await pool.query(
+                await connection.query(
                     'INSERT IGNORE INTO correct_countries (user_id, quiz_type, country_id) VALUES ?',
                     [rows]
                 );
@@ -86,7 +98,11 @@ router.post('/', async (req, res) => {
         // 4. Räkna ut XP efter sparningen. Totalen hämtas på nytt från databasen,
         //    så att den stämmer även om två resultat sparas samtidigt.
         const xpGained = xpForResult(correct_count) + bonusXp;
-        const xpTotal = await getUserXp(req.user.id);
+        //    Frågan ställs i transaktionen, så att det nya resultatet räknas med.
+        const xpTotal = await getUserXp(req.user.id, connection);
+
+        // 4b. Allt gick bra – spara på riktigt. Först nu syns ändringarna för andra.
+        await connection.commit();
         const levelBefore = getLevel(xpBefore).level;
         const progress = getLevel(xpTotal);
 
@@ -111,8 +127,17 @@ router.post('/', async (req, res) => {
             }
         });
     } catch (err) {
+        // Något gick fel – ångra allt som gjorts i transaktionen
+        if (connection) {
+            await connection.rollback().catch(() => {});
+        }
         console.error('Database error while saving result:', err);
         return res.status(500).json({ error: 'Internal Server Error', message: 'Could not save result.' });
+    } finally {
+        // Lämna tillbaka anslutningen till poolen, annars tar de till slut slut
+        if (connection) {
+            connection.release();
+        }
     }
 });
 

@@ -71,9 +71,11 @@ function getLevel(xp) {
 
 // Hämtar användarens totala XP från databasen:
 // 10 XP per rätt svar + all combo-bonus som sparats i bonus_xp
-async function getUserXp(userId) {
+//   db – var frågan ställs. Standard är poolen, men results.js skickar in sin
+//        transaktion så att den nya totalen räknas med det som just sparats.
+async function getUserXp(userId, db = pool) {
     // COALESCE ger 0 i stället för NULL om användaren inte har några resultat
-    const [rows] = await pool.query(
+    const [rows] = await db.query(
         `SELECT COALESCE(SUM(correct_count), 0) AS correct,
                 COALESCE(SUM(bonus_xp), 0)      AS bonus
          FROM results WHERE user_id = ?`,
