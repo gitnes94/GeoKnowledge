@@ -60,6 +60,11 @@ function selectAnswer(option) {
   if (selectedId.value !== null || isFinished.value) {
     return
   }
+  // Tiden kan ha tagit slut mellan två tick – då räknas inte svaret
+  if (deadline && Date.now() >= deadline) {
+    finishQuiz()
+    return
+  }
   selectedId.value = option.id
   const isRight = option.id === currentQuestion.value.correct.id
   answers.value.push(isRight)
@@ -89,7 +94,12 @@ function finishQuiz() {
   emit('finished', {
     correct_count: correctCount.value,
     total: props.questions.length,
-    answers: answers.value,
+    // Tar tiden slut räknas obesvarade frågor som fel, så att listan
+    // alltid har ett svar per fråga (det kontrollerar backenden)
+    answers: [
+      ...answers.value,
+      ...Array(props.questions.length - answers.value.length).fill(false),
+    ],
   })
 }
 
