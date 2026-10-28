@@ -26,6 +26,12 @@ async function migrate() {
         console.log('Databasen uppdaterad: kolumnen results.bonus_xp lades till')
     }
 
+    // Quiz på tid
+    if (!(await columnExists('results', 'timed'))) {
+        await pool.query('ALTER TABLE results ADD COLUMN timed BOOLEAN NOT NULL DEFAULT FALSE')
+        console.log('Databasen uppdaterad: kolumnen results.timed lades till')
+    }
+
     // Troféer: länder man svarat rätt på – tillagd oktober 2026.
     // IF NOT EXISTS gör att inget händer om tabellen redan finns.
     await pool.query(`

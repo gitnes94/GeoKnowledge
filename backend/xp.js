@@ -13,6 +13,12 @@ const COMBO_START = 5;
 const COMBO_BONUS_PERCENT = 20;
 const COMBO_BONUS_PER_CORRECT = XP_PER_CORRECT * COMBO_BONUS_PERCENT / 100; // = 2
 
+// Quiz på tid: klarar man quizet (svarar på alla frågor innan tiden tar slut)
+// får man 5 XP extra per rätt svar, plus en bonus för sekunderna som är kvar.
+const TIMED_BONUS_PER_CORRECT = 5;
+// Tidsgränsen för ett quiz på tid, i sekunder. Samma som i frontendens MODES.
+const TIME_LIMIT_SECONDS = 60;
+
 // Nivå 1 kräver 100 XP. Varje ny nivå kräver 50 XP mer än den förra:
 //   nivå 1 → 100 XP, nivå 2 → 150 XP, nivå 3 → 200 XP, ...
 const BASE_XP_PER_LEVEL = 100;
@@ -44,6 +50,16 @@ function comboBonus(answers) {
     return bonus;
 }
 
+// Räknar ut bonusen för ett klarat quiz på tid:
+// 5 XP per rätt svar + sekunder kvar × andelen rätt, avrundat till heltal.
+// Andelen rätt gör att det inte lönar sig att gissa snabbt.
+// Exempel: 9 av 10 rätt med 10 s kvar → 45 + 10 × 0,9 = 54 XP
+function timedBonus(correctCount, total, secondsLeft) {
+    const correctBonus = correctCount * TIMED_BONUS_PER_CORRECT;
+    const timeBonus = Math.round(secondsLeft * (correctCount / total));
+    return correctBonus + timeBonus;
+}
+
 // Hur mycket XP som behövs för att klara en viss nivå
 function xpNeededForLevel(level) {
     return BASE_XP_PER_LEVEL + XP_INCREASE_PER_LEVEL * (level - 1);
@@ -70,7 +86,7 @@ function getLevel(xp) {
 }
 
 // Hämtar användarens totala XP från databasen:
-// 10 XP per rätt svar + all combo-bonus som sparats i bonus_xp
+// 10 XP per rätt svar + all bonus som sparats i bonus_xp (combo och quiz på tid)
 //   db – var frågan ställs. Standard är poolen, men results.js skickar in sin
 //        transaktion så att den nya totalen räknas med det som just sparats.
 async function getUserXp(userId, db = pool) {
@@ -91,6 +107,8 @@ module.exports = {
     COMBO_BONUS_PERCENT,
     xpForResult,
     comboBonus,
+    timedBonus,
+    TIME_LIMIT_SECONDS,
     xpNeededForLevel,
     getLevel,
     getUserXp
