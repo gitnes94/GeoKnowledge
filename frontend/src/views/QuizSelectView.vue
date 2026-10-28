@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { MODES } from '@/services/quiz.js'
 
 // Routern – används för att byta sida från kod
 const router = useRouter()
@@ -35,6 +36,9 @@ const QUIZ_TYPES = [
 // id på quiztypen användaren valt, eller null
 const selectedId = ref(null)
 
+// Läget användaren valt. Vanligt är förvalt
+const selectedMode = ref(MODES[0])
+
 // Hela objektet för den valda typen (eller undefined)
 const selectedType = computed(() => QUIZ_TYPES.find((type) => type.id === selectedId.value))
 
@@ -51,7 +55,12 @@ function selectType(type) {
 
 function startQuiz() {
   if (selectedType.value) {
-    router.push(selectedType.value.route)
+    const timeLimit = selectedMode.value.timeLimit
+    router.push({
+      path: selectedType.value.route,
+      // ?time=60 följer med till quizet om läget har en tidsgräns
+      query: timeLimit ? { time: timeLimit } : {},
+    })
   }
 }
 </script>
@@ -81,6 +90,21 @@ function startQuiz() {
       <template v-if="selectedType">Du har valt: <strong>{{ selectedType.name }}</strong></template>
       <template v-else>Klicka på en quiztyp för att välja den.</template>
     </p>
+
+    <div class="modes">
+
+      <button
+        v-for="mode in MODES"
+        :key="mode.id"
+        type="button"
+        class="mode"
+        :class="{ selected: mode.id === selectedMode.id }"
+        :aria-pressed="mode.id === selectedMode.id"
+        @click="selectedMode = mode"
+        >
+        {{ mode.name }}
+      </button>
+    </div>
 
     <button class="start" :disabled="!selectedType" @click="startQuiz">
       Starta quiz
@@ -180,6 +204,37 @@ h2 {
 
 .chosen {
   margin: 1.5rem 0 0;
+}
+
+/* Valet av läge: vanligt eller på tid */
+.modes {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.modes-label {
+  font-weight: 700;
+}
+
+.mode {
+  padding: 0.5rem 1.25rem;
+  font: inherit;
+  font-weight: 700;
+  color: var(--primary-green, #1b4d3e);
+  background: #ffffff;
+  border: 3px solid var(--primary-green, #1b4d3e);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* Det valda läget markeras som de valda korten */
+.mode.selected {
+  background: #d6f5dc;
+  border-color: #2f9e4f;
 }
 
 .start {

@@ -1,8 +1,8 @@
 <script setup>
-import { ref, shallowRef, onMounted } from 'vue'
+import { ref, shallowRef, computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { loadWorld } from '../services/countries.js'
-import { createQuestions, getRegionCountries, CONTINENTS } from '../services/quiz.js'
+import { createQuestions, getRegionCountries, CONTINENTS, MODES } from '../services/quiz.js'
 import { getSeenIds, markSeen } from '../services/quizHistory.js'
 import { saveResult } from '../services/results.js'
 import { useAuthStore } from '../services/auth'
@@ -10,6 +10,14 @@ import QuizRunner from '../components/QuizRunner.vue'
 import XpBar from '../components/XpBar.vue'
 
 const route = useRoute()
+
+// Tidsgränsen från adressen (?time=60), eller null om quizet inte är på tid.
+// Bara tider som finns i MODES godtas, så att ingen kan skriva in en egen tid.
+const timeLimit = computed(() => {
+  const time = Number(route.query.time)
+  return MODES.some((mode) => mode.timeLimit === time) ? time : null
+})
+
 // Hur många frågor ett quiz har
 const QUESTION_COUNT = 10
 
@@ -113,6 +121,7 @@ async function onFinished(quizResult) {
       region: continent.value,
       correct_count: quizResult.correct_count,
       total: quizResult.total,
+      timed: timeLimit.value !== null,
       answers: quizResult.answers, // behövs för combo-bonusen
     })
     if (thisRound !== round.value) return
@@ -154,6 +163,7 @@ onMounted(async () => {
     <!-- Enkel slutskärm. Den riktiga resultatsidan byggs i #26. -->
     <div v-else-if="result" class="finished">
       <h2>Klart!</h2>
+      <p v-if="timeLimit" class="timed-badge">⏱ Spelat på tid</p>
       <p class="final-score">{{ result.correct_count }} av {{ result.total }} rätt</p>
 
       <!-- Visar om resultatet sparades -->
@@ -190,7 +200,7 @@ onMounted(async () => {
 
       <!-- QuizRunner sköter frågorna, knapparna och poängen.
            Här skickar vi bara in flaggan som ska visas. -->
-      <QuizRunner :key="round" :questions="questions" @finished="onFinished">
+      <QuizRunner :key="round" :questions="questions" :time-limit="timeLimit" @finished="onFinished">
         <template #default="{ question }">
           <div class="flag-area">
             <img
@@ -297,6 +307,18 @@ h2 {
 
 .save-status a {
   color: inherit;
+  font-weight: 700;
+}
+
+/* Visar på slutskärmen att quizet spelades på tid */
+.timed-badge {
+  display: inline-block;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem 0.875rem;
+  border-radius: 999px;
+  background: var(--primary-green, #1b4d3e);
+  color: #ffffff;
+  font-size: 0.875rem;
   font-weight: 700;
 }
 </style>
