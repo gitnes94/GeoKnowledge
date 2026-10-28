@@ -4,6 +4,7 @@ const express = require('express')
 const cors = require('cors')
 
 const pool = require('./db')
+const migrate = require('./migrate')
 const authRoutes = require('./auth')
 const usersRoutes = require('./users')
 const resultsRoutes = require('./results');
@@ -41,6 +42,13 @@ app.get('/api/health', async (req, res) => {
 
 const port = process.env.PORT || 3000
 
-app.listen(port, () => {
-    console.log(`Servern körs på http://localhost:${port}`)
-})
+// Uppdatera databasen först (t.ex. nya kolumner), starta sedan servern.
+// Går det inte – t.ex. för att Docker inte är igång – startar servern ändå,
+// så att felet syns i loggen och /api/health.
+migrate()
+    .catch((error) => console.error('Kunde inte uppdatera databasen:', error.message))
+    .finally(() => {
+        app.listen(port, () => {
+            console.log(`Servern körs på http://localhost:${port}`)
+        })
+    })
