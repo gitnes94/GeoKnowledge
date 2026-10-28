@@ -1,5 +1,8 @@
 <script setup>
 import { RouterLink } from 'vue-router'
+import { useAuthStore } from '@/services/auth'
+
+const authStore = useAuthStore()
 </script>
 
 <template>
@@ -7,17 +10,26 @@ import { RouterLink } from 'vue-router'
     <h2>Meny</h2>
     <p class="intro">Välj vad du vill göra.</p>
 
-    <RouterLink to="/menu/leaderboard" class="menu-card">
-      <span class="icon" aria-hidden="true">🏆</span>
-      <span class="name">Topplista</span>
-      <span class="description">Se vilka spelare som har högst resultat.</span>
-    </RouterLink>
+    <div class="menu-items">
+      <RouterLink to="/menu/leaderboard" class="menu-card">
+        <span class="icon" aria-hidden="true">🏆</span>
+        <span class="name">Topplista</span>
+        <span class="description">Se vilka spelare som har högst resultat.</span>
+      </RouterLink>
 
-    <RouterLink to="/menu/trophies" class="menu-card">
-      <span class="icon" aria-hidden="true">🎖️</span>
-      <span class="name">Troféer</span>
-      <span class="description">Se vilka troféer du har låst upp och vad som är kvar.</span>
-    </RouterLink>
+      <RouterLink v-if="authStore.isLoggedIn" to="/menu/profile" class="menu-card">
+        <span class="icon" aria-hidden="true">👤</span>
+        <span class="name">Profil</span>
+        <span class="description">Se din statistik och klarade utmaningar!</span>
+      </RouterLink>
+
+      <RouterLink to="/menu/trophies" class="menu-card">
+        <span class="icon" aria-hidden="true">🎖️</span>
+        <span class="name">Troféer</span>
+        <span class="description">Se dina troféer och vad som är kvar.</span>
+      </RouterLink>
+    </div>
+
   </section>
 </template>
 
@@ -42,6 +54,13 @@ h2 {
   margin: 0.5rem 0 1.5rem;
 }
 
+.menu-items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+}
+
 .menu-card {
   display: flex;
   flex-direction: column;
@@ -57,11 +76,6 @@ h2 {
   box-shadow: 0 4px 10px rgba(27, 77, 62, 0.12);
   text-decoration: none;
   transition: transform 0.15s ease, background 0.15s ease;
-}
-
-/* Luft mellan korten */
-.menu-card + .menu-card {
-  margin-top: 0.875rem;
 }
 
 .menu-card:hover {

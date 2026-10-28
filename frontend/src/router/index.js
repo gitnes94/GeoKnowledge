@@ -7,6 +7,7 @@ import CapitalQuizView from '../views/CapitalQuizView.vue';
 import AuthSuccess from '../views/AuthSuccess.vue';
 import Login from '../views/Login.vue';
 import ContinentSelectView from '../views/ContinentSelectView.vue';
+import ProfileView from '@/views/ProfileView.vue';
 import MenuView from '@/views/MenuView.vue';
 import LeaderboardView from '@/views/LeaderboardView.vue';
 import TrophiesView from '@/views/TrophiesView.vue';
@@ -68,6 +69,11 @@ const router = createRouter({
       path: '/menu/trophies',
       name: 'trophies',
       component: TrophiesView,
+    },
+    {
+      path: '/menu/profile',
+      name: 'profile',
+      component: ProfileView
     }
   ]
 });
