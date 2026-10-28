@@ -12,8 +12,12 @@ const REGIONS = ['World', 'Europe', 'Asia', 'Africa', 'North America', 'South Am
 //
 // answers (valfritt) är svaren i ordning, t.ex. [true, true, false, ...].
 // Den behövs för att räkna ut combo-bonusen. Utan answers blir bonusen 0.
+//
+// country_ids (valfritt) är landet som var rätt svar på varje fråga, i samma
+// ordning som answers, t.ex. ['SWE', 'FRA', ...]. De länder man svarade rätt
+// på sparas i correct_countries och används för mästartroféerna.
 router.post('/', async (req, res) => {
-    const { quiz_type, region, correct_count, total, answers } = req.body;
+    const { quiz_type, region, correct_count, total, answers, country_ids } = req.body;
 
     // 1. Validera det som skickats in
     if (!QUIZ_TYPES.includes(quiz_type)) {
@@ -39,6 +43,19 @@ router.post('/', async (req, res) => {
         }
     }
 
+    // country_ids kräver answers (annars vet vi inte vilka som var rätt),
+    // och varje id måste se ut som en landskod, t.ex. 'SWE'
+    if (country_ids !== undefined) {
+        const isValidIds =
+            Array.isArray(answers) &&
+            Array.isArray(country_ids) &&
+            country_ids.length === total &&
+            country_ids.every((id) => typeof id === 'string' && /^[A-Z0-9-]{2,10}$/.test(id));
+        if (!isValidIds) {
+            return res.status(400).json({ error: 'Bad Request', message: 'country_ids must match answers.' });
+        }
+    }
+
     // Bonusen räknas ut här i backenden – frontenden får inte bestämma XP:n själv
     const bonusXp = answers ? comboBonus(answers) : 0;
 
@@ -51,6 +68,20 @@ router.post('/', async (req, res) => {
             'INSERT INTO results (user_id, quiz_type, region, correct_count, total, bonus_xp) VALUES (?, ?, ?, ?, ?, ?)',
             [req.user.id, quiz_type, region, correct_count, total, bonusXp]
         );
+
+        // 3b. Spara länderna man svarade rätt på. INSERT IGNORE hoppar över
+        //     länder som redan finns, så varje land sparas bara en gång.
+        if (country_ids) {
+            const rows = country_ids
+                .filter((id, i) => answers[i])
+                .map((id) => [req.user.id, quiz_type, id]);
+            if (rows.length > 0) {
+                await pool.query(
+                    'INSERT IGNORE INTO correct_countries (user_id, quiz_type, country_id) VALUES ?',
+                    [rows]
+                );
+            }
+        }
 
         // 4. Räkna ut XP efter sparningen. Totalen hämtas på nytt från databasen,
         //    så att den stämmer även om två resultat sparas samtidigt.

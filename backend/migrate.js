@@ -25,6 +25,22 @@ async function migrate() {
         await pool.query('ALTER TABLE results ADD COLUMN bonus_xp INT NOT NULL DEFAULT 0')
         console.log('Databasen uppdaterad: kolumnen results.bonus_xp lades till')
     }
+
+    // Troféer: länder man svarat rätt på – tillagd oktober 2026.
+    // IF NOT EXISTS gör att inget händer om tabellen redan finns.
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS correct_countries
+        (
+            user_id    INT         NOT NULL,
+            quiz_type  VARCHAR(30) NOT NULL,
+            country_id VARCHAR(10) NOT NULL,
+            created_at TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+            PRIMARY KEY (user_id, quiz_type, country_id),
+            CONSTRAINT fk_correct_countries_user
+                FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        )
+    `)
 }
 
 module.exports = migrate

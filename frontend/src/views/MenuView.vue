@@ -12,6 +12,12 @@ import { RouterLink } from 'vue-router'
       <span class="name">Topplista</span>
       <span class="description">Se vilka spelare som har högst resultat.</span>
     </RouterLink>
+
+    <RouterLink to="/menu/trophies" class="menu-card">
+      <span class="icon" aria-hidden="true">🎖️</span>
+      <span class="name">Troféer</span>
+      <span class="description">Se vilka troféer du har låst upp och vad som är kvar.</span>
+    </RouterLink>
   </section>
 </template>
 
@@ -51,6 +57,11 @@ h2 {
   box-shadow: 0 4px 10px rgba(27, 77, 62, 0.12);
   text-decoration: none;
   transition: transform 0.15s ease, background 0.15s ease;
+}
+
+/* Luft mellan korten */
+.menu-card + .menu-card {
+  margin-top: 0.875rem;
 }
 
 .menu-card:hover {

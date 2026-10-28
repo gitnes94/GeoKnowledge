@@ -8,6 +8,8 @@ import { saveResult } from '../services/results.js'
 import { useAuthStore } from '../services/auth'
 import QuizRunner from '../components/QuizRunner.vue'
 import XpBar from '../components/XpBar.vue'
+import NewTrophies from '../components/NewTrophies.vue'
+import { startTrophyCheck, findNewTrophies } from '../services/trophies.js'
 import CountryShape from '../components/CountryShape.vue'
 
 // Skapar en router som kan hämta info från URL:en
@@ -54,6 +56,13 @@ const saveStatus = ref('idle')
 // XP från backenden efter sparningen: { gained, total, level, leveledUp, ... }
 const xp = ref(null)
 
+// Troféer som låstes upp av quizet – visas på slutskärmen
+const newTrophies = ref([])
+
+// Användarens trofésiffror från när quizet startade. Jämförs med siffrorna
+// efter sparningen för att se vilka troféer som är nya.
+let trophiesBefore = null
+
 // Hittar landets form (GeoJSON-feature) utifrån dess id.
 // Använder den detaljerade formen om den hunnit laddas, annars den enkla.
 function findFeature(id) {
@@ -77,6 +86,8 @@ function startQuiz() {
   result.value = null
   saveStatus.value = 'idle'
   xp.value = null
+  newTrophies.value = []
+  trophiesBefore = authStore.token ? startTrophyCheck() : null
   round.value++
 }
 
@@ -113,6 +124,8 @@ async function onFinished(quizResult) {
       correct_count: quizResult.correct_count,
       total: quizResult.total,
       answers: quizResult.answers, // behövs för combo-bonusen
+      // Landet som var rätt svar på varje fråga – för mästartroféerna
+      country_ids: questions.value.map((question) => question.correct.id),
     })
     if (thisRound !== round.value) return
     xp.value = saved.xp
@@ -122,6 +135,16 @@ async function onFinished(quizResult) {
     if (thisRound !== round.value) return
     // 401 = token saknas, är ogiltig eller har gått ut
     saveStatus.value = e.status === 401 ? 'expired' : 'error'
+    return
+  }
+
+  // Leta efter nya troféer. Går det inte visas bara inga – resultatet är ju sparat.
+  try {
+    const found = await findNewTrophies(trophiesBefore)
+    if (thisRound !== round.value) return
+    newTrophies.value = found
+  } catch (e) {
+    console.error(e)
   }
 }
 
@@ -177,6 +200,9 @@ onMounted(async () => {
           :bonus="xp.bonus"
           :leveled-up="xp.leveledUp"
       />
+
+      <!-- Troféer som låstes upp av det här quizet -->
+      <NewTrophies :trophies="newTrophies" />
 
       <div class="actions">
         <button class="primary" @click="startQuiz">Spela igen</button>
