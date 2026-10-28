@@ -22,6 +22,12 @@ const authStore = useAuthStore()
         <span class="name">Profil</span>
         <span class="description">Se din statistik och klarade utmaningar!</span>
       </RouterLink>
+
+      <RouterLink to="/menu/trophies" class="menu-card">
+        <span class="icon" aria-hidden="true">🎖️</span>
+        <span class="name">Troféer</span>
+        <span class="description">Se dina troféer och vad som är kvar.</span>
+      </RouterLink>
     </div>
 
   </section>

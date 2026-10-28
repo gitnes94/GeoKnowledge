@@ -2,12 +2,14 @@
 import { ref, shallowRef, computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { loadWorld } from '../services/countries.js'
-import { createQuestions, getRegionCountries, CONTINENTS, MODES } from '../services/quiz.js'
+import { createQuestions, getRegionCountries, CONTINENTS, MODES, FLAG_EXCLUDED_ISO2 } from '../services/quiz.js'
 import { getSeenIds, markSeen } from '../services/quizHistory.js'
 import { saveResult } from '../services/results.js'
 import { useAuthStore } from '../services/auth'
 import QuizRunner from '../components/QuizRunner.vue'
 import XpBar from '../components/XpBar.vue'
+import NewTrophies from '../components/NewTrophies.vue'
+import { startTrophyCheck, findNewTrophies } from '../services/trophies.js'
 
 const route = useRoute()
 
@@ -21,11 +23,8 @@ const timeLimit = computed(() => {
 // Hur många frågor ett quiz har
 const QUESTION_COUNT = 10
 
-// Områden vars flagga är densamma som ett annat lands, eller som inte har
-// en egen officiell flagga. De går inte att gissa på och hoppas över.
-//   SJ = Svalbard (Norges flagga), GF = Franska Guyana (Frankrikes flagga),
-//   TF = Franska sydterritorierna, NC = Nya Kaledonien (Frankrikes flagga)
-const EXCLUDED_ISO2 = ['SJ', 'GF', 'TF', 'NC']
+// Områden utan egen flagga hoppas över – listan finns i quiz.js
+const EXCLUDED_ISO2 = FLAG_EXCLUDED_ISO2
 
 // Kartdatan, men bara med länder som passar i ett flaggquiz
 const world = shallowRef(null)
@@ -64,6 +63,13 @@ const saveStatus = ref('idle')
 // XP från backenden efter sparningen: { gained, total, level, leveledUp, ... }
 const xp = ref(null)
 
+// Troféer som låstes upp av quizet – visas på slutskärmen
+const newTrophies = ref([])
+
+// Användarens trofésiffror från när quizet startade. Jämförs med siffrorna
+// efter sparningen för att se vilka troféer som är nya.
+let trophiesBefore = null
+
 // Tar fram flaggbildens adress för ett land utifrån dess id.
 // Flaggorna ligger i public/flags/ (kopierade med npm run copy-flags) och
 // heter som landets tvåbokstavskod med små bokstäver, t.ex. /flags/fr.svg.
@@ -86,6 +92,8 @@ function startQuiz() {
   result.value = null
   saveStatus.value = 'idle'
   xp.value = null
+  newTrophies.value = []
+  trophiesBefore = authStore.token ? startTrophyCheck() : null
   round.value++
 }
 
@@ -123,6 +131,8 @@ async function onFinished(quizResult) {
       total: quizResult.total,
       timed: timeLimit.value !== null,
       answers: quizResult.answers, // behövs för combo-bonusen
+      // Landet som var rätt svar på varje fråga – för mästartroféerna
+      country_ids: questions.value.map((question) => question.correct.id),
     })
     if (thisRound !== round.value) return
     xp.value = saved.xp
@@ -132,6 +142,16 @@ async function onFinished(quizResult) {
     if (thisRound !== round.value) return
     // 401 = token saknas, är ogiltig eller har gått ut
     saveStatus.value = e.status === 401 ? 'expired' : 'error'
+    return
+  }
+
+  // Leta efter nya troféer. Går det inte visas bara inga – resultatet är ju sparat.
+  try {
+    const found = await findNewTrophies(trophiesBefore)
+    if (thisRound !== round.value) return
+    newTrophies.value = found
+  } catch (e) {
+    console.error(e)
   }
 }
 
@@ -188,6 +208,9 @@ onMounted(async () => {
           :bonus="xp.bonus"
           :leveled-up="xp.leveledUp"
       />
+
+      <!-- Troféer som låstes upp av det här quizet -->
+      <NewTrophies :trophies="newTrophies" />
 
       <div class="actions">
         <button class="primary" @click="startQuiz">Spela igen</button>

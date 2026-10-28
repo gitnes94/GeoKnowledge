@@ -10,6 +10,7 @@ const usersRoutes = require('./users')
 const resultsRoutes = require('./results');
 const progressRoutes = require('./progress');
 const leaderboardRoutes = require('./leaderboard');
+const trophiesRoutes = require('./trophies');
 const { requireAuth } = require('./jwt');
 
 
@@ -22,6 +23,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/users', usersRoutes)
 app.use('/api/results', requireAuth, resultsRoutes)
 app.use('/api/progress', requireAuth, progressRoutes)
+app.use('/api/trophies', requireAuth, trophiesRoutes)
 app.use('/api/leaderboard', leaderboardRoutes);
 
 app.get('/api/health', async (req, res) => {
