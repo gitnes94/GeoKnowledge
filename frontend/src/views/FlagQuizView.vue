@@ -2,7 +2,8 @@
 import { ref, shallowRef, computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { loadWorld } from '../services/countries.js'
-import { createQuestions, CONTINENTS, MODES } from '../services/quiz.js'
+import { createQuestions, getRegionCountries, CONTINENTS, MODES } from '../services/quiz.js'
+import { getSeenIds, markSeen } from '../services/quizHistory.js'
 import { saveResult } from '../services/results.js'
 import { useAuthStore } from '../services/auth'
 import QuizRunner from '../components/QuizRunner.vue'
@@ -79,17 +80,28 @@ function startQuiz() {
       ? queryContinent
       : 'World'
 
-  questions.value = createQuestions(world.value, QUESTION_COUNT, continent.value)
+  // Länder man redan fått i tidigare quiz väljs sist
+  const seenIds = getSeenIds(QUIZ_TYPE, continent.value)
+  questions.value = createQuestions(world.value, QUESTION_COUNT, continent.value, seenIds)
   result.value = null
   saveStatus.value = 'idle'
   xp.value = null
   round.value++
 }
 
-// QuizRunner skickar { correct_count, total } när sista frågan är besvarad.
+// QuizRunner skickar { correct_count, total, answers } när sista frågan är besvarad.
 // Resultatet visas direkt och sparas sedan i backenden om användaren är inloggad.
 async function onFinished(quizResult) {
   result.value = quizResult
+
+  // Kom ihåg vilka länder som var med, så att de inte kommer igen
+  // förrän alla länder i världsdelen har varit med
+  markSeen(
+      QUIZ_TYPE,
+      continent.value,
+      questions.value.map((question) => question.correct.id),
+      getRegionCountries(world.value, continent.value).map((country) => country.id)
+  )
 
   // Inte inloggad: quizet fungerar ändå, men inget sparas
   if (!authStore.token) {
@@ -110,6 +122,7 @@ async function onFinished(quizResult) {
       correct_count: quizResult.correct_count,
       total: quizResult.total,
       timed: timeLimit.value !== null,
+      answers: quizResult.answers, // behövs för combo-bonusen
     })
     if (thisRound !== round.value) return
     xp.value = saved.xp
@@ -172,6 +185,7 @@ onMounted(async () => {
           :xp-into-level="xp.xpIntoLevel"
           :xp-per-level="xp.xpPerLevel"
           :gained="xp.gained"
+          :bonus="xp.bonus"
           :leveled-up="xp.leveledUp"
       />
 

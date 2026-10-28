@@ -103,6 +103,7 @@ async function onFinished(quizResult) {
       correct_count: quizResult.correct_count,
       total: quizResult.total,
       timed: timeLimit.value !== null,
+      answers: quizResult.answers,
     })
     if (thisRound !== round.value) return
     xp.value = saved.xp
@@ -157,6 +158,7 @@ onMounted(async () => {
           :xp-into-level="xp.xpIntoLevel"
           :xp-per-level="xp.xpPerLevel"
           :gained="xp.gained"
+          :bonus="xp.bonus"
           :leveled-up="xp.leveledUp"
       />
 

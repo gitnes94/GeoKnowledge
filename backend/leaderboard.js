@@ -108,7 +108,7 @@ router.get('/', async (req, res) => {
                 SELECT
                     u.id AS user_id,
                     u.username,
-                    SUM(r.correct_count) * ? AS xp
+                    COALESCE(SUM(r.correct_count), 0) * ? + COALESCE(SUM(r.bonus_xp), 0) AS xp
                 FROM results r
                 JOIN users u ON u.id = r.user_id
                 GROUP BY u.id, u.username
