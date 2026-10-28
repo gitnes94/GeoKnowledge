@@ -1,5 +1,8 @@
 <script setup>
 import { RouterLink } from 'vue-router'
+import { useAuthStore } from '@/services/auth'
+
+const authStore = useAuthStore()
 </script>
 
 <template>
@@ -7,11 +10,20 @@ import { RouterLink } from 'vue-router'
     <h2>Meny</h2>
     <p class="intro">Välj vad du vill göra.</p>
 
-    <RouterLink to="/menu/leaderboard" class="menu-card">
-      <span class="icon" aria-hidden="true">🏆</span>
-      <span class="name">Topplista</span>
-      <span class="description">Se vilka spelare som har högst resultat.</span>
-    </RouterLink>
+    <div class="menu-items">
+      <RouterLink to="/menu/leaderboard" class="menu-card">
+        <span class="icon" aria-hidden="true">🏆</span>
+        <span class="name">Topplista</span>
+        <span class="description">Se vilka spelare som har högst resultat.</span>
+      </RouterLink>
+
+      <RouterLink v-if="authStore.isLoggedIn" to="/menu/profile" class="menu-card">
+        <span class="icon" aria-hidden="true">👤</span>
+        <span class="name">Profil</span>
+        <span class="description">Se din statistik och klarade utmaningar!</span>
+      </RouterLink>
+    </div>
+
   </section>
 </template>
 
@@ -34,6 +46,13 @@ h2 {
 
 .intro {
   margin: 0.5rem 0 1.5rem;
+}
+
+.menu-items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
 }
 
 .menu-card {

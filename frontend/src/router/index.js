@@ -7,6 +7,7 @@ import CapitalQuizView from '../views/CapitalQuizView.vue';
 import AuthSuccess from '../views/AuthSuccess.vue';
 import Login from '../views/Login.vue';
 import ContinentSelectView from '../views/ContinentSelectView.vue';
+import ProfileView from '@/views/ProfileView.vue';
 import MenuView from '@/views/MenuView.vue';
 import LeaderboardView from '@/views/LeaderboardView.vue';
 
@@ -62,6 +63,11 @@ const router = createRouter({
       path: '/menu/leaderboard',
       name: 'leaderboard',
       component: LeaderboardView
+    },
+    {
+      path: '/menu/profile',
+      name: 'profile',
+      component: ProfileView
     }
   ]
 });

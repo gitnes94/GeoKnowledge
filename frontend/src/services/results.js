@@ -1,4 +1,4 @@
-// Här samlas allt som handlar om att SPARA quizresultat i backenden.
+// Här samlas allt som handlar om att hantera quizresultat i backenden.
 // Vyerna anropar bara saveResult() och behöver inte veta hur anropet ser ut.
 
 import { apiFetch } from '@/services/api'
@@ -19,6 +19,20 @@ export async function saveResult(result) {
 
   if (!response.ok) {
     const error = new Error(`Kunde inte spara resultatet (status ${response.status})`)
+    error.status = response.status
+    throw error
+  }
+
+  return response.json()
+}
+
+export async function getResults() {
+  const response = await apiFetch('/api/results', {
+    method: 'GET',
+  })
+
+  if (!response.ok) {
+    const error = new Error(`Kunde inte hämta resultatet (status ${response.status})`)
     error.status = response.status
     throw error
   }
