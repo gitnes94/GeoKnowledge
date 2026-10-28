@@ -49,10 +49,11 @@ function startQuiz() {
     return
   }
 
-  // Om allt stämmer, navigera till rätt quiz-vy med vald kontinent
+  // Om allt stämmer, navigera till rätt quiz-vy med vald kontinent.
+  // Har användaren valt att spela på tid följer ?time= med vidare.
   router.push({
     path: `/quiz/${type}/play`,
-    query: { continent: selectedContinent.value.id }
+    query: { continent: selectedContinent.value.id, time: route.query.time }
   })
 }
 </script>

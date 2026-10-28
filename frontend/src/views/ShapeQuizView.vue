@@ -1,17 +1,26 @@
 <script setup>
-import { ref, shallowRef, onMounted } from 'vue'
+import { ref, shallowRef, computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { loadWorld, loadCountryDetail } from '../services/countries.js'
-import { createQuestions, getRegionCountries, CONTINENTS } from '../services/quiz.js'
+import { createQuestions, getRegionCountries, CONTINENTS, MODES } from '../services/quiz.js'
 import { getSeenIds, markSeen } from '../services/quizHistory.js'
 import { saveResult } from '../services/results.js'
 import { useAuthStore } from '../services/auth'
 import QuizRunner from '../components/QuizRunner.vue'
 import XpBar from '../components/XpBar.vue'
+import NewTrophies from '../components/NewTrophies.vue'
+import { startTrophyCheck, findNewTrophies } from '../services/trophies.js'
 import CountryShape from '../components/CountryShape.vue'
 
 // Skapar en router som kan hämta info från URL:en
 const route = useRoute()
+
+// Tidsgränsen från adressen (?time=60), eller null om quizet inte är på tid.
+// Bara tider som finns i MODES godtas, så att ingen kan skriva in en egen tid.
+const timeLimit = computed(() => {
+  const time = Number(route.query.time)
+  return MODES.some((mode) => mode.timeLimit === time) ? time : null
+})
 
 // Hur många frågor ett quiz har
 const QUESTION_COUNT = 10
@@ -54,6 +63,13 @@ const saveStatus = ref('idle')
 // XP från backenden efter sparningen: { gained, total, level, leveledUp, ... }
 const xp = ref(null)
 
+// Troféer som låstes upp av quizet – visas på slutskärmen
+const newTrophies = ref([])
+
+// Användarens trofésiffror från när quizet startade. Jämförs med siffrorna
+// efter sparningen för att se vilka troféer som är nya.
+let trophiesBefore = null
+
 // Hittar landets form (GeoJSON-feature) utifrån dess id.
 // Använder den detaljerade formen om den hunnit laddas, annars den enkla.
 function findFeature(id) {
@@ -77,6 +93,8 @@ function startQuiz() {
   result.value = null
   saveStatus.value = 'idle'
   xp.value = null
+  newTrophies.value = []
+  trophiesBefore = authStore.token ? startTrophyCheck() : null
   round.value++
 }
 
@@ -112,7 +130,10 @@ async function onFinished(quizResult) {
       region: continent.value,
       correct_count: quizResult.correct_count,
       total: quizResult.total,
+      timed: timeLimit.value !== null,
       answers: quizResult.answers, // behövs för combo-bonusen
+      // Landet som var rätt svar på varje fråga – för mästartroféerna
+      country_ids: questions.value.map((question) => question.correct.id),
     })
     if (thisRound !== round.value) return
     xp.value = saved.xp
@@ -122,6 +143,16 @@ async function onFinished(quizResult) {
     if (thisRound !== round.value) return
     // 401 = token saknas, är ogiltig eller har gått ut
     saveStatus.value = e.status === 401 ? 'expired' : 'error'
+    return
+  }
+
+  // Leta efter nya troféer. Går det inte visas bara inga – resultatet är ju sparat.
+  try {
+    const found = await findNewTrophies(trophiesBefore)
+    if (thisRound !== round.value) return
+    newTrophies.value = found
+  } catch (e) {
+    console.error(e)
   }
 }
 
@@ -153,6 +184,7 @@ onMounted(async () => {
     <!-- Enkel slutskärm. Den riktiga resultatsidan byggs i #26. -->
     <div v-else-if="result" class="finished">
       <h2>Klart!</h2>
+      <p v-if="timeLimit" class="timed-badge">⏱ Spelat på tid</p>
       <p class="final-score">{{ result.correct_count }} av {{ result.total }} rätt</p>
 
       <!-- Visar om resultatet sparades -->
@@ -178,6 +210,9 @@ onMounted(async () => {
           :leveled-up="xp.leveledUp"
       />
 
+      <!-- Troféer som låstes upp av det här quizet -->
+      <NewTrophies :trophies="newTrophies" />
+
       <div class="actions">
         <button class="primary" @click="startQuiz">Spela igen</button>
         <RouterLink to="/quiz" class="secondary">Välj ett annat quiz</RouterLink>
@@ -189,7 +224,7 @@ onMounted(async () => {
 
       <!-- QuizRunner sköter frågorna, knapparna och poängen.
            Det vi skickar in i sloten visas ovanför svarsalternativen. -->
-      <QuizRunner :key="round" :questions="questions" @finished="onFinished">
+      <QuizRunner :key="round" :questions="questions" :time-limit="timeLimit" @finished="onFinished">
         <template #default="{ question }">
           <div class="shape-area">
             <CountryShape :feature="findFeature(question.correct.id)" />
@@ -284,6 +319,18 @@ h2 {
 
 .save-status a {
   color: inherit;
+  font-weight: 700;
+}
+
+/* Visar på slutskärmen att quizet spelades på tid */
+.timed-badge {
+  display: inline-block;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem 0.875rem;
+  border-radius: 999px;
+  background: var(--primary-green, #1b4d3e);
+  color: #ffffff;
+  font-size: 0.875rem;
   font-weight: 700;
 }
 </style>

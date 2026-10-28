@@ -13,6 +13,12 @@ export const CONTINENTS = {
     Oceania: 'Oceanien',
 }
 
+// Lägen för quizet.
+export const MODES = [
+    { id: 'normal', name: 'Vanligt', timeLimit: null },
+    { id: 'timed', name: '⏱ På tid', timeLimit: 60 },
+]
+
 // Hur många svarsalternativ varje fråga har
 const OPTIONS_PER_QUESTION = 4
 
@@ -44,6 +50,12 @@ function toOption(country) {
     return { id: country.id, name: country.name_sv }
 }
 
+// Områden vars flagga är densamma som ett annat lands, eller som inte har
+// en egen officiell flagga. De går inte att gissa på och hoppas över i flaggquizet.
+//   SJ = Svalbard (Norges flagga), GF = Franska Guyana (Frankrikes flagga),
+//   TF = Franska sydterritorierna, NC = Nya Kaledonien (Frankrikes flagga)
+export const FLAG_EXCLUDED_ISO2 = ['SJ', 'GF', 'TF', 'NC']
+
 // Alla länder som kan förekomma i ett quiz för en viss världsdel.
 //   continent – 'World' eller en nyckel från CONTINENTS, t.ex. 'Europe'
 export function getRegionCountries(world, continent = 'World') {
@@ -52,6 +64,17 @@ export function getRegionCountries(world, continent = 'World') {
         return countries
     }
     return countries.filter((country) => country.continent === continent)
+}
+
+// Samma som getRegionCountries, men för en viss quiztyp. Flaggquizet hoppar
+// över områden utan egen flagga. Används av troféerna, så att "alla länder"
+// betyder exakt de länder som kan komma i quizet.
+export function getQuizPool(world, quizType, continent = 'World') {
+    const countries = getRegionCountries(world, continent)
+    if (quizType === 'flag') {
+        return countries.filter((country) => !FLAG_EXCLUDED_ISO2.includes(country.iso2))
+    }
+    return countries
 }
 
 // Väljer vilka länder som blir rätt svar.
