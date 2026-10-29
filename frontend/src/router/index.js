@@ -10,6 +10,7 @@ import ContinentSelectView from '../views/ContinentSelectView.vue';
 import ProfileView from '@/views/ProfileView.vue';
 import MenuView from '@/views/MenuView.vue';
 import LeaderboardView from '@/views/LeaderboardView.vue';
+import LbViewEx from '@/views/LbViewEx.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -63,6 +64,11 @@ const router = createRouter({
       path: '/menu/leaderboard',
       name: 'leaderboard',
       component: LeaderboardView
+    },
+    {
+      path: '/menu/leaderboard-experiment',
+      name: 'leaderboard-experiment',
+      component: LbViewEx
     },
     {
       path: '/menu/profile',
