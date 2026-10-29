@@ -11,7 +11,7 @@ const authStore = useAuthStore()
 
 // Första bokstaven i namnet, visas om inte användaren har något bild
 const initial = computed(() =>
-    [...(authStore.user?.username ?? '?')][0].toUpperCase())
+    [...(authStore.user?.username || '?')][0].toUpperCase())
 
 // Blir true om profilbilden inte gick att ladda, då visas bokstaven i stället
 const imageFailed = ref(false)

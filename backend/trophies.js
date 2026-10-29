@@ -4,7 +4,11 @@ const pool = require('./db');
 const { getUserXp, getLevel } = require('./xp');
 
 // Quiztyperna som har troféer – samma som i results.js
-const QUIZ_TYPES = ['shape', 'flag', 'capital'];
+const QUIZ_TYPES = ['shape', 'flag', 'capital', 'geomaster'];
+
+// Antal liv i GeoMaster (samma som LIVES i frontendens geomaster.js).
+// En resa är klarad om man gjorde färre fel än så.
+const GEOMASTER_LIVES = 3;
 
 // GET /api/trophies – det som behövs för att räkna ut den inloggades troféer.
 // Vilka troféer som finns och när de låses upp bestäms i frontenden
@@ -13,6 +17,7 @@ const QUIZ_TYPES = ['shape', 'flag', 'capital'];
 //     level: 4,
 //     perfect: { shape: 2, flag: 0, capital: 1 },        // antal felfria quiz
 //     correct: { shape: ['SWE', ...], flag: [...], ... } // länder rätt minst en gång
+//     geomaster: { completed: 3, completedWorld: 1 }       // klarade GeoMaster-resor
 //   }
 // requireAuth (i jwt.js) körs före den här routen och sätter req.user.
 router.get('/', async (req, res) => {
@@ -33,6 +38,16 @@ router.get('/', async (req, res) => {
             [req.user.id]
         );
 
+        // GeoMaster-resor där man hade liv kvar (färre fel än antal liv).
+        // Obesvarade frågor räknas som fel, så en resa man dog på har minst 3 fel.
+        const [[journeyRow]] = await pool.query(
+            `SELECT COUNT(*) AS completed,
+                    COALESCE(SUM(region = 'World'), 0) AS completedWorld
+             FROM results
+             WHERE user_id = ? AND quiz_type = 'geomaster' AND total - correct_count < ?`,
+            [req.user.id, GEOMASTER_LIVES]
+        );
+
         // Gör om raderna till ett objekt per quiztyp, med 0 / [] som standard
         const perfect = {};
         const correct = {};
@@ -47,7 +62,18 @@ router.get('/', async (req, res) => {
             if (row.quiz_type in correct) correct[row.quiz_type].push(row.country_id);
         }
 
-        return res.json({ level: getLevel(xp).level, perfect, correct });
+        // GeoMaster har inga egna mästarländer – de sparas under frågetypen
+        delete correct.geomaster;
+
+        return res.json({
+            level: getLevel(xp).level,
+            perfect,
+            correct,
+            geomaster: {
+                completed: Number(journeyRow.completed),
+                completedWorld: Number(journeyRow.completedWorld),
+            },
+        });
     } catch (err) {
         console.error('Database error while fetching trophies:', err);
         return res.status(500).json({ error: 'Internal Server Error', message: 'Could not fetch trophies.' });

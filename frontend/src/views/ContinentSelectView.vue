@@ -40,7 +40,7 @@ function startQuiz() {
   if (!selectedContinent.value) return
 
   // Tillåt bara quiztyper som finns
-  const validTypes = ['shape', 'flag', 'capital']
+  const validTypes = ['shape', 'flag', 'capital', 'geomaster']
   const type = quizType.value
 
   if (!validTypes.includes(type)) {

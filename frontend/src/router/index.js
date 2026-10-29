@@ -4,6 +4,7 @@ import QuizSelectView from '../views/QuizSelectView.vue';
 import ShapeQuizView from '../views/ShapeQuizView.vue';
 import FlagQuizView from '../views/FlagQuizView.vue';
 import CapitalQuizView from '../views/CapitalQuizView.vue';
+import GeoMasterView from '../views/GeoMasterView.vue';
 import AuthSuccess from '../views/AuthSuccess.vue';
 import Login from '../views/Login.vue';
 import ContinentSelectView from '../views/ContinentSelectView.vue';
@@ -44,6 +45,11 @@ const router = createRouter({
       path: '/quiz/capital/play',
       name: 'capital-quiz',
       component: CapitalQuizView,
+    },
+    {
+      path: '/quiz/geomaster/play',
+      name: 'geomaster',
+      component: GeoMasterView,
     },
     {  
       path: '/auth/success',

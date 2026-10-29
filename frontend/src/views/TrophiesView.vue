@@ -11,9 +11,9 @@ const authStore = useAuthStore()
 const trophies = ref(null)
 const error = ref(null)
 
-// Nivå- och felfritt-troféerna, uppdelade per grupp. Visas som kort.
+// Nivå-, felfritt- och GeoMaster-troféerna, uppdelade per grupp. Visas som kort.
 const cardGroups = computed(() =>
-  ['level', 'perfect'].map((key) => ({
+  ['level', 'perfect', 'geomaster'].map((key) => ({
     key,
     title: TROPHY_GROUPS[key],
     trophies: trophies.value.filter((trophy) => trophy.group === key),
