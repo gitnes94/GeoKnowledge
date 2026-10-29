@@ -168,6 +168,7 @@ onMounted(async () => {
         <h3>Statistik</h3>
         <p class="big-number">{{ percentCorrect }} %</p>
         <p class="muted">{{ totalCorrect }} av {{ totalAnswers }} rätt</p>
+        <RouterLink to="/menu/leaderboard" class="button">Visa topplistan</RouterLink>
       </div>
       </div>
 
@@ -251,12 +252,19 @@ onMounted(async () => {
   }
 }
 
-/* En ruta med grön ram – samma stil som korten i menyn och quizvalet */
 .box {
+  display: flex;
+  flex-direction: column;
   padding: 1.25rem 1rem;
   border: 3px solid var(--primary-green, #1b4d3e);
   border-radius: 1.25rem;
   box-shadow: 0 4px 10px rgba(27, 77, 62, 0.12);
+}
+
+/* Knappen längst ner i rutan, så att knapparna i båda rutorna hamnar på samma höjd */
+.box .button {
+  margin-top: auto;
+  align-self: center;
 }
 
 
@@ -322,6 +330,12 @@ onMounted(async () => {
 .button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* Hover: samma effekt som korten och knapparna i resten av appen */
+.button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: #f0f8f1;
 }
 
 /* Överst på profilsidan: bild och namn som sidans rubrik, centrerat */
