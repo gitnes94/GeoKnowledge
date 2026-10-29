@@ -1,19 +1,54 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { getLeaderboard } from '@/services/leaderboard'
+
+const tables = [
+  { key: 'allQuizzes', title: 'Alla quiz', kind: 'accuracy', description: 'Bäst genomsnittlig träffsäkerhet' },
+  { key: 'contour', title: 'Konturquiz', kind: 'accuracy', description: 'Känn igen länder på deras form' },
+  { key: 'flags', title: 'Flaggquiz', kind: 'accuracy', description: 'Världens flaggor' },
+  { key: 'capitals', title: 'Huvudstadsquiz', kind: 'accuracy', description: 'Hitta huvudstäderna' },
+  { key: 'geoMaster', title: 'GeoMaster', kind: 'accuracy', description: 'En geografisk resa med blandade frågor'},
+  { key: 'xp', title: 'Mest XP', kind: 'xp', description: 'Samla erfarenhet på alla quiz' },
+  { key: 'quizCount', title: 'Flest quiz', kind: 'quiz-count', description: 'Vem har spelat allra mest?' },
+]
 
 const leaderboard = ref(null)
 const isLoading = ref(true)
 const errorMessage = ref('')
+const selectedKey = ref('allQuizzes')
 
-const tables = [
-  { key: 'contour', title: 'Konturquiz', value: (row) => `${row.percentage}%`, kind: 'accuracy' },
-  { key: 'flags', title: 'Flaggquiz', value: (row) => `${row.percentage}%`, kind: 'accuracy' },
-  { key: 'capitals', title: 'Huvudstadsquiz', value: (row) => `${row.percentage}%`, kind: 'accuracy' },
-  { key: 'allQuizzes', title: 'Alla quiz – andel rätt', value: (row) => `${row.percentage}%`, kind: 'accuracy' },
-  { key: 'xp', title: 'Mest XP', value: (row) => `${row.xp} XP`, kind: 'xp' },
-  { key: 'quizCount', title: 'Flest genomförda quiz', value: (row) => row.quiz_count, kind: 'quiz-count' },
-]
+const activeTable = computed(() => tables.find((table) => table.key === selectedKey.value))
+const activeRows = computed(() => leaderboard.value?.[selectedKey.value] ?? [])
+
+function formatScore(row) {
+  if (activeTable.value.kind === 'accuracy') return `${row.percentage}%`
+  if (activeTable.value.kind === 'xp') return `${row.xp} XP`
+  return row.quiz_count
+}
+
+function getProgress(row) {
+  const score = Number(activeTable.value.kind === 'accuracy'
+    ? row.percentage
+    : activeTable.value.kind === 'xp'
+      ? row.xp
+      : row.quiz_count)
+  const leader = activeRows.value[0]
+  const leaderScore = Number(activeTable.value.kind === 'accuracy'
+    ? leader?.percentage
+    : activeTable.value.kind === 'xp'
+      ? leader?.xp
+      : leader?.quiz_count)
+
+  if (!Number.isFinite(score) || !Number.isFinite(leaderScore) || leaderScore <= 0) return 0
+  return Math.min(100, Math.max(0, (score / leaderScore) * 100))
+}
+
+function getRankClass(place) {
+  if (place === 1) return 'gold'
+  if (place === 2) return 'silver'
+  if (place === 3) return 'bronze'
+  return ''
+}
 
 onMounted(async () => {
   try {
@@ -28,136 +63,472 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="leaderboard-view">
-    <h2>Topplista</h2>
+  <main class="leaderboard-ex3">
+    <header class="hero">
+      <div class="hero-copy">
+        <h1>Topplistor</h1>
+      </div>
+      
+    </header>
 
-    <p v-if="isLoading" class="status-message" role="status">
-      Hämtar topplistan …
+    <p v-if="isLoading" class="state-message" role="status">Hämtar topplistan …</p>
+    <p v-else-if="errorMessage" class="state-message error-message" role="alert">
+      {{ errorMessage }}
     </p>
-    <p v-else-if="errorMessage" class="status-message error" role="alert">
-      Topplistan kunde inte hämtas. Försök igen senare.
-    </p>
 
-    <div v-else class="leaderboard-grid">
-      <section v-for="table in tables" :key="table.key" class="leaderboard-card">
-        <h3>{{ table.title }}</h3>
+    <template v-else>
+      <nav class="category-tabs" aria-label="Välj topplista">
+        <button
+          v-for="table in tables"
+          :key="table.key"
+          type="button"
+          :aria-pressed="selectedKey === table.key"
+          :class="{ active: selectedKey === table.key }"
+          @click="selectedKey = table.key"
+        >
+          {{ table.title }}
+        </button>
+      </nav>
 
-        <p v-if="leaderboard[table.key].length === 0" class="empty-message">
-          Inga resultat ännu.
+      <section class="leaderboard-panel" aria-live="polite">
+        <header class="panel-heading">
+          <div>
+            <span class="eyebrow">TOPPLISTA</span>
+            <h2>{{ activeTable.title }}</h2>
+            <p>{{ activeTable.description }}</p>
+          </div>
+          <span class="metric-badge">{{ activeTable.kind === 'accuracy' ? 'Andel rätt' : activeTable.kind === 'xp' ? 'Erfarenhetspoäng' : 'Genomförda quiz' }}</span>
+        </header>
+
+        <p v-if="activeRows.length === 0" class="empty-message">
+          Inga resultat ännu. Bli först på listan!
         </p>
 
-        <div v-else class="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Plats</th>
-                <th scope="col">Användare</th>
-                <th scope="col">
-                  {{ table.kind === 'accuracy' ? 'Andel rätt' : table.kind === 'xp' ? 'XP' : 'Quiz' }}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in leaderboard[table.key]" :key="row.userId">
-                <td>{{ row.place }}</td>
-                <td>{{ row.username }}</td>
-                <td>
-                  {{ table.value(row) }}
-                  <small v-if="table.kind === 'accuracy'">
-                    ({{ row.correctAnswers }}/{{ row.totalQuestions }})
-                  </small>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <template v-else>
+          <div class="list-heading">
+            <span>PLACERING</span>
+            <span>SPELARE</span>
+            <span>{{ activeTable.kind === 'accuracy' ? 'ANDEL RÄTT' : activeTable.kind === 'xp' ? 'XP' : 'QUIZ' }}</span>
+          </div>
+          <ol class="player-list">
+            <li
+              v-for="row in activeRows"
+              :key="row.userId"
+              class="player-row"
+              :class="{ leader: row.place === 1 }"
+            >
+              <span class="rank" :class="getRankClass(row.place)">{{ row.place }}</span>
+              <span class="row-avatar">{{ row.username.slice(0, 1).toUpperCase() }}</span>
+              <span class="row-name">{{ row.username }}</span>
+              <span class="row-progress" aria-hidden="true">
+                <span :style="{ width: `${getProgress(row)}%` }"></span>
+              </span>
+              <strong class="row-score">{{ formatScore(row) }}</strong>
+            </li>
+          </ol>
+        </template>
       </section>
-    </div>
+    </template>
   </main>
 </template>
 
 <style scoped>
-.leaderboard-view {
-  max-width: 70rem;
-  width: calc(100% - 2rem);
-  margin: 1.5rem auto;
-  padding: 2rem 1.5rem;
-  background: var(--card-bg, #ffffff);
-  border-radius: 1.75rem;
-  box-shadow: 0 10px 25px rgba(27, 77, 62, 0.12);
+.leaderboard-ex3 {
+  --forest: var(--primary-green, #1b4d3e);
+  --muted: #74867b;
+  width: min(100% - 2rem, 68rem);
+  margin: 1.5rem auto 3rem;
+  color: var(--forest);
 }
 
-h2 {
-  margin: 0 0 1.5rem;
-  text-align: center;
-  font-size: 1.75rem;
-}
-
-.leaderboard-grid {
+.hero {
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  min-height: 10rem;
+  grid-template-columns: minmax(0, 1.15fr) minmax(15rem, 0.85fr);
+  align-items: center;
+  overflow: hidden;
+  padding: clamp(1.5rem, 5vw, 3.25rem);
+  border-radius: 1.6rem;
+  background:
+    radial-gradient(ellipse at 82% 30%, rgba(119, 165, 127, 0.3), transparent 38%),
+    linear-gradient(120deg, #163f33, #24634b);
+  color: #fff;
+  box-shadow: 0 18px 38px rgba(27, 77, 62, 0.18);
 }
 
-.leaderboard-card {
-  min-width: 0;
-  padding: 1rem;
-  border: 2px solid var(--primary-green, #1b4d3e);
-  border-radius: 1.25rem;
+.hero-copy {
+  position: relative;
+  z-index: 1;
 }
 
-h3 {
-  margin: 0 0 0.75rem;
-  color: var(--primary-green, #1b4d3e);
+.back-link {
+  display: inline-block;
+  margin-bottom: 1.25rem;
+  color: #e2eee3;
+  font-size: 0.85rem;
+  font-weight: 650;
+  text-decoration: none;
 }
 
-.table-scroll {
+.back-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.eyebrow,
+.demo-label,
+.art-caption {
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.13em;
+}
+
+.eyebrow {
+  display: block;
+  color: #c5ddc8;
+}
+
+h1 {
+  margin: 0.4rem 0 0;
+  font-size: clamp(2.4rem, 5.5vw, 4rem);
+  font-weight: 650;
+  letter-spacing: -0.065em;
+  line-height: 0.98;
+}
+
+.hero-copy > p {
+  max-width: 27rem;
+  margin: 0.8rem 0 1rem;
+  color: #d3e3d6;
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.demo-label {
+  display: inline-block;
+  padding: 0.42rem 0.6rem;
+  border: 1px solid rgba(226, 238, 227, 0.32);
+  border-radius: 999px;
+  color: #e2eee3;
+  font-size: 0.61rem;
+  letter-spacing: 0.08em;
+}
+
+.hero-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  min-height: 12rem;
+  color: #b7d3b9;
+}
+
+.hero-art svg {
+  width: min(100%, 18rem);
+  max-height: 14rem;
+  overflow: visible;
+}
+
+.art-caption {
+  position: absolute;
+  right: 0;
+  bottom: 0.25rem;
+  color: #c5ddc8;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+}
+
+.category-tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin: 1.25rem 0 1rem;
+  padding: 0.35rem;
   overflow-x: auto;
+  border: 1px solid rgba(27, 77, 62, 0.08);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.78);
+  scrollbar-width: thin;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
+.category-tabs button {
+  flex: 0 0 auto;
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-radius: 0.7rem;
+  background: transparent;
+  color: #60766b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 650;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-th,
-td {
-  padding: 0.55rem 0.4rem;
-  border-bottom: 1px solid rgba(27, 77, 62, 0.2);
+.category-tabs button:hover {
+  background: #f0f6f1;
 }
 
-th {
-  font-size: 0.9rem;
+.category-tabs button.active {
+  background: var(--forest);
+  color: #fff;
+  box-shadow: 0 3px 8px rgba(27, 77, 62, 0.18);
 }
 
-td:first-child {
-  width: 3.5rem;
+.category-tabs button:focus-visible,
+.back-link:focus-visible {
+  outline: 3px solid #78b795;
+  outline-offset: 3px;
+}
+
+.leaderboard-panel {
+  padding: clamp(1.1rem, 4vw, 2rem);
+  border: 1px solid rgba(27, 77, 62, 0.08);
+  border-radius: 1.6rem;
+  background: #fff;
+  box-shadow: 0 18px 50px rgba(27, 77, 62, 0.1);
+}
+
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.panel-heading h2 {
+  margin: 0.2rem 0 0;
+  font-size: 1.35rem;
+  letter-spacing: -0.025em;
+}
+
+.panel-heading p {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.panel-heading .eyebrow {
+  color: var(--muted);
+}
+
+.metric-badge {
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: #f1f7f2;
+  color: #577365;
+  font-size: 0.76rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.row-avatar {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #d6e9da;
+  color: var(--forest);
+  font-weight: 750;
+}
+
+.list-heading,
+.player-row {
+  display: grid;
+  grid-template-columns: 2.2rem 2.2rem minmax(0, 1fr) minmax(4rem, 8rem) auto;
+  align-items: center;
+  column-gap: 0.75rem;
+}
+
+.list-heading {
+  padding: 0.8rem 0.75rem;
+  border-bottom: 1px solid #e9efea;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+
+.list-heading span:first-child {
+  grid-column: 1 / 3;
+}
+
+.list-heading span:nth-child(2) {
+  grid-column: 3;
+}
+
+.list-heading span:last-child {
+  grid-column: 5;
+  text-align: right;
+}
+
+.player-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.player-row {
+  min-height: 3.8rem;
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid #edf1ed;
+}
+
+.player-row:last-child {
+  border-bottom: 0;
+}
+
+.player-row.leader {
+  border-radius: 0.7rem;
+  background: #f7faf6;
+}
+
+.rank {
+  color: var(--muted);
+  font-size: 0.86rem;
   font-weight: 700;
 }
 
-small {
-  color: #52675f;
+.rank.gold {
+  color: #b17a25;
+}
+
+.rank.silver {
+  color: #7d8b8c;
+}
+
+.rank.bronze {
+  color: #a76e48;
+}
+
+.row-avatar {
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.78rem;
+}
+
+.row-name {
+  overflow: hidden;
+  font-size: 0.92rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-progress {
+  display: block;
+  height: 0.25rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf2ed;
+}
+
+.row-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #84b98b, #347b55);
+}
+
+.row-score {
+  font-size: 0.88rem;
+  text-align: right;
   white-space: nowrap;
 }
 
 .empty-message,
-.status-message {
-  margin: 0.5rem 0;
+.state-message {
+  margin: 1rem 0;
+  padding: 1rem;
+  color: var(--muted);
   text-align: center;
 }
 
-.error {
-  color: #a11b1b;
+.state-message {
+  border-radius: 0.9rem;
+  background: #fff;
 }
 
-@media (max-width: 700px) {
-  .leaderboard-grid {
-    grid-template-columns: 1fr;
+.error-message {
+  color: #9e2929;
+}
+
+@media (max-width: 680px) {
+  .hero {
+    min-height: 15rem;
+    grid-template-columns: minmax(0, 1fr) minmax(10rem, 0.7fr);
   }
 
-  .leaderboard-view {
-    padding: 1.5rem 1rem;
+  .panel-heading {
+    align-items: flex-start;
+    flex-direction: column;
   }
+
+  .list-heading,
+  .player-row {
+    grid-template-columns: 1.6rem 1.8rem minmax(0, 1fr) auto;
+    column-gap: 0.5rem;
+  }
+
+  .list-heading span:nth-child(2) {
+    grid-column: 3;
+  }
+
+  .list-heading span:last-child {
+    grid-column: 4;
+  }
+
+  .row-progress {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .leaderboard-ex3 {
+    width: min(100% - 1.25rem, 68rem);
+    margin-top: 0.75rem;
+  }
+
+  .hero {
+    min-height: 0;
+    grid-template-columns: 1fr;
+    padding: 1.4rem;
+  }
+
+  .back-link {
+    margin-bottom: 1rem;
+  }
+
+  .hero-art {
+    position: absolute;
+    right: -3.4rem;
+    bottom: 0.3rem;
+    width: 13rem;
+    min-height: 0;
+    opacity: 0.43;
+  }
+
+  .hero-art svg {
+    width: 100%;
+  }
+
+  .art-caption {
+    display: none;
+  }
+
+  .hero-copy > p {
+    max-width: 17rem;
+    font-size: 0.9rem;
+  }
+
+  .category-tabs {
+    margin-top: 0.9rem;
+  }
+
+  .category-tabs button {
+    padding: 0.65rem 0.8rem;
+  }
+
 }
 </style>

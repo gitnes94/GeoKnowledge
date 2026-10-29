@@ -12,7 +12,6 @@ import ProfileView from '@/views/ProfileView.vue';
 import MenuView from '@/views/MenuView.vue';
 import LeaderboardView from '@/views/LeaderboardView.vue';
 import TrophiesView from '@/views/TrophiesView.vue';
-import LbViewEx from '@/views/LbViewEx.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -76,11 +75,6 @@ const router = createRouter({
       path: '/menu/trophies',
       name: 'trophies',
       component: TrophiesView,
-    },
-    {
-      path: '/menu/leaderboard-experiment',
-      name: 'leaderboard-experiment',
-      component: LbViewEx
     },
     {
       path: '/menu/profile',
