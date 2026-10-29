@@ -17,6 +17,8 @@ const initial = computed(() =>
 const imageFailed = ref(false)
 
 const result = ref([])
+// Blir true om resultaten inte gick att hämta, så att vi inte visar en falsk tom historik
+const resultsError = ref(false)
 const progress = ref(null)
 
 
@@ -89,30 +91,23 @@ async function loadTrophies() {
   return buildTrophies(stats, world)
 }
 
-onMounted(async () => {
-  const [resultRes, progressRes, trophiesRes] = await Promise.allSettled([
-    getResults(),
-    getProgress(),
-    loadTrophies()
-  ])
+// Varje del hämtas för sig och visas så fort dess data har kommit.
+// De långsamma troféerna gör alltså inte att historiken och XP:n väntar.
+onMounted(() => {
+  getResults()
+      .then((data) => { result.value = data })
+      .catch((error) => {
+        resultsError.value = true
+        console.error('Failed to load results:', error)
+      })
 
-  if (resultRes.status === 'fulfilled') {
-    result.value = resultRes.value
-  } else {
-    console.error('Failed to load results:', resultRes.reason)
-  }
+  getProgress()
+      .then((data) => { progress.value = data })
+      .catch((error) => console.error('Failed to load progress:', error))
 
-  if (progressRes.status === 'fulfilled') {
-    progress.value = progressRes.value
-  } else {
-    console.error('Failed to load progress:', progressRes.reason)
-  }
-
-  if (trophiesRes.status === 'fulfilled') {
-    trophies.value = trophiesRes.value
-  } else {
-    console.error('Failed to load trophies:', trophiesRes.reason)
-  }
+  loadTrophies()
+      .then((data) => { trophies.value = data })
+      .catch((error) => console.error('Failed to load trophies:', error))
 })
 </script>
 
@@ -166,16 +161,17 @@ onMounted(async () => {
       <!-- Statistik -->
       <div class="box">
         <h3>Statistik</h3>
-        <p class="big-number">{{ percentCorrect }} %</p>
-        <p class="muted">{{ totalCorrect }} av {{ totalAnswers }} rätt</p>
+        <p class="big-number">{{ resultsError ? '–' : percentCorrect + ' %' }}</p>
+        <p v-if="!resultsError" class="muted">{{ totalCorrect }} av {{ totalAnswers }} rätt</p>
         <RouterLink to="/menu/leaderboard" class="button">Visa topplistan</RouterLink>
       </div>
       </div>
 
       <!-- Senaste quiz -->
-        <h3>Senaste quiz</h3>
-        <p v-if="result.length === 0" class="muted">Du har inte spelat något quiz än.</p>
-        <ul v-else class="history">
+      <h3>Senaste quiz</h3>
+      <p v-if="resultsError" class="muted">Kunde inte hämta dina resultat just nu.</p>
+      <p v-else-if="result.length === 0" class="muted">Du har inte spelat något quiz än.</p>
+      <ul v-else class="history">
           <li v-for="item in paginatedResult" :key="item.id">
             <span class="muted">{{ new Date(item.created_at).toLocaleString('sv-SE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) }}</span>
             <span>
