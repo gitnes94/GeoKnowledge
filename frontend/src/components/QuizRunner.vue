@@ -118,6 +118,13 @@ function finishQuiz() {
       ...answers.value,
       ...Array(props.questions.length - answers.value.length).fill(false),
     ],
+    // Hann användaren svara på alla frågor? Blir false om tiden tog slut innan.
+    completed: answers.value.length === props.questions.length,
+    // Sekunder kvar när quizet tog slut. Bara när quizet har en tidsgräns,
+    // annars undefined, och då skickas fältet inte alls till backend.
+    seconds_left: props.timeLimit
+        ? Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
+        : undefined,
   })
 }
 
