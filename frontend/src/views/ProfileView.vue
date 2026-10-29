@@ -7,6 +7,11 @@ import XpBar from '../components/XpBar.vue'
 import { useAuthStore } from '@/services/auth'
 
 const authStore = useAuthStore()
+
+// Första bokstaven i namnet, visas om inte användaren har något bild
+const initial = computed(() =>
+authStore.user?.username?.charAt(0).toUpperCase() ?? '?')
+
 const result = ref(null)
 const progress = ref(null)
 const totalAnswers = ref(0)
@@ -98,6 +103,17 @@ onMounted(async () => {
 
 <template>
     <section class="profile">
+      <div class="profile-header">
+        <img
+            v-if="authStore.user?.picture_url"
+            :src="authStore.user.picture_url"
+            alt="Profilbild"
+            class="avatar"
+            referrerpolicy="no-referrer"
+        />
+        <span v-else class="avatar avatar-initial" aria-hidden="true">{{ initial }}</span>
+        <h2 class="profile-name">{{ authStore.user?.username }}</h2>
+      </div>
         <XpBar class="xpBar"
           v-if="progress"
           :level="progress.level"
@@ -214,4 +230,44 @@ ul li {
     border-radius: 24px;
 }
 
+
+/* Överst på profilsidan: bild och namn, i samma kortstil som resten av sidan */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: calc(100% - 40px);
+  max-width: 500px;
+  margin: 10px auto;
+  padding: 1rem 1.5rem;
+  background: var(--card-bg, #ffffff);
+  border-radius: 24px;
+  box-shadow: 0 10px 25px rgba(27, 77, 62, 0.12);
+}
+
+/* Runda profilbilden */
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* Rutan med första bokstaven när bild saknas */
+.avatar-initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-green, #1b4d3e);
+  color: #ffffff;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.profile-name {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--primary-green, #1b4d3e);
+}
 </style>
