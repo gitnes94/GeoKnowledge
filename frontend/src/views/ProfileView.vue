@@ -10,7 +10,10 @@ const authStore = useAuthStore()
 
 // Första bokstaven i namnet, visas om inte användaren har något bild
 const initial = computed(() =>
-authStore.user?.username?.charAt(0).toUpperCase() ?? '?')
+    [...(authStore.user?.username ?? '?')][0].toUpperCase())
+
+// Blir true om profilbilden inte gick att ladda, då visas bokstaven i stället
+const imageFailed = ref(false)
 
 const result = ref(null)
 const progress = ref(null)
@@ -105,11 +108,12 @@ onMounted(async () => {
     <section class="profile">
       <div class="profile-header">
         <img
-            v-if="authStore.user?.picture_url"
+            v-if="authStore.user?.picture_url && !imageFailed"
             :src="authStore.user.picture_url"
             alt="Profilbild"
             class="avatar"
             referrerpolicy="no-referrer"
+            @error="imageFailed = true"
         />
         <span v-else class="avatar avatar-initial" aria-hidden="true">{{ initial }}</span>
         <h2 class="profile-name">{{ authStore.user?.username }}</h2>
