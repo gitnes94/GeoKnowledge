@@ -24,6 +24,8 @@ const progress = ref(null)
 
 // Alla troféer, upplåsta och låsta (null tills de har hämtats)
 const trophies = ref(null)
+// Blir bara truer om troféerna inte gick att hämta
+const trophiesError = ref(false)
 
 // Hur stor del av en trofé man har klarat, mellan 0 och 1
 function progressShare(trophy) {
@@ -107,7 +109,10 @@ onMounted(() => {
 
   loadTrophies()
       .then((data) => { trophies.value = data })
-      .catch((error) => console.error('Failed to load trophies:', error))
+      .catch((error) => {
+        trophiesError.value = true
+        console.error('Failed to load trophies:', error)
+      })
 })
 </script>
 
@@ -154,7 +159,8 @@ onMounted(() => {
           </div>
 
         </template>
-        <p v-else-if="trophies">Du har låst upp alla troféer du kan sikta på! 🎉</p>
+          <p v-else-if="trophiesError" class="muted">Kunde inte hämta troféerna just nu.</p>
+          <p v-else-if="trophies">Du har låst upp alla troféer du kan sikta på! 🎉</p>
         <RouterLink to="/menu/trophies" class="button">Visa mina troféer</RouterLink>
       </div>
 
