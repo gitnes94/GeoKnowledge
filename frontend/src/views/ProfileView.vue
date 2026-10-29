@@ -19,7 +19,12 @@ const imageFailed = ref(false)
 const result = ref([])
 // Blir true om resultaten inte gick att hämta, så att vi inte visar en falsk tom historik
 const resultsError = ref(false)
+// true medan resultaten hämtas, så att vi inte visar "inga quiz" innan de har kommit
+const resultsLoading = ref(true)
+
 const progress = ref(null)
+// Blir true om XP:n inte gick att hämta
+const progressError = ref(false)
 
 
 // Alla troféer, upplåsta och låsta (null tills de har hämtats)
@@ -67,6 +72,12 @@ const totalAnswers = computed(() =>
 // Andel rätt i procent (0 om man inte har spelat något än)
 const percentCorrect = computed(() =>
   totalAnswers.value > 0 ? Math.round((totalCorrect.value / totalAnswers.value) * 100) : 0)
+// Texten i statistikrutan: … medan den laddar, – vid fel, annars procenten
+const percentText = computed(() => {
+  if (resultsLoading.value) return '…'
+  if (resultsError.value) return '–'
+  return percentCorrect.value + ' %'
+})
 const totalPages = computed(() => Math.max(1, Math.ceil(result.value.length / itemsPerPage.value)))
 const paginatedResult = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value
@@ -102,10 +113,14 @@ onMounted(() => {
         resultsError.value = true
         console.error('Failed to load results:', error)
       })
+      .finally(() => { resultsLoading.value = false })
 
   getProgress()
       .then((data) => { progress.value = data })
-      .catch((error) => console.error('Failed to load progress:', error))
+      .catch((error) => {
+        progressError.value = true
+        console.error('Failed to load progress:', error)
+      })
 
   loadTrophies()
       .then((data) => { trophies.value = data })
@@ -136,6 +151,8 @@ onMounted(() => {
             :xp-into-level="progress.xpIntoLevel"
             :xp-per-level="progress.xpPerLevel"
         />
+      <p v-else-if="progressError" class="muted">Kunde inte hämta din XP just nu.</p>
+
 
       <!-- Nästa trofé att låsa upp -->
       <div class="boxes">
@@ -164,18 +181,19 @@ onMounted(() => {
         <RouterLink to="/menu/trophies" class="button">Visa mina troféer</RouterLink>
       </div>
 
-      <!-- Statistik -->
-      <div class="box">
-        <h3>Statistik</h3>
-        <p class="big-number">{{ resultsError ? '–' : percentCorrect + ' %' }}</p>
-        <p v-if="!resultsError" class="muted">{{ totalCorrect }} av {{ totalAnswers }} rätt</p>
-        <RouterLink to="/menu/leaderboard" class="button">Visa topplistan</RouterLink>
-      </div>
+        <!-- Statistik -->
+        <div class="box">
+          <h3>Statistik</h3>
+          <p class="big-number">{{ percentText }}</p>
+          <p v-if="!resultsLoading && !resultsError" class="muted">{{ totalCorrect }} av {{ totalAnswers }} rätt</p>
+          <RouterLink to="/menu/leaderboard" class="button">Visa topplistan</RouterLink>
+        </div>
       </div>
 
       <!-- Senaste quiz -->
       <h3>Senaste quiz</h3>
-      <p v-if="resultsError" class="muted">Kunde inte hämta dina resultat just nu.</p>
+      <p v-if="resultsLoading" class="muted">Laddar…</p>
+      <p v-else-if="resultsError" class="muted">Kunde inte hämta dina resultat just nu.</p>
       <p v-else-if="result.length === 0" class="muted">Du har inte spelat något quiz än.</p>
       <ul v-else class="history">
           <li v-for="item in paginatedResult" :key="item.id">
