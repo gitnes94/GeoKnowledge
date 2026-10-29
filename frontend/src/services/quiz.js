@@ -120,7 +120,14 @@ function pickWrongOptions(countries, answer, earlierAnswerIds) {
 export function createQuestions(world, count = 10, continent = 'World', seenIds = []) {
     const countries = getRegionCountries(world, continent)
     const answers = pickAnswers(countries, count, seenIds)
+    return buildQuestions(countries, answers)
+}
 
+// Gör frågor av länder som redan är valda som rätt svar, i den ordningen.
+//   countries – alla länder felsvaren får väljas bland
+//   answers   – länderna som ska vara rätt svar (landobjekt från kartdatan)
+// Används av createQuestions och av GeoMaster, där resvägen bestämmer länderna.
+export function buildQuestions(countries, answers) {
     return answers.map((answer, index) => {
         // Rätt svar från frågorna före den här
         const earlierAnswerIds = new Set(answers.slice(0, index).map((a) => a.id))
