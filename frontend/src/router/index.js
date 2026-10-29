@@ -4,12 +4,14 @@ import QuizSelectView from '../views/QuizSelectView.vue';
 import ShapeQuizView from '../views/ShapeQuizView.vue';
 import FlagQuizView from '../views/FlagQuizView.vue';
 import CapitalQuizView from '../views/CapitalQuizView.vue';
+import GeoMasterView from '../views/GeoMasterView.vue';
 import AuthSuccess from '../views/AuthSuccess.vue';
 import Login from '../views/Login.vue';
 import ContinentSelectView from '../views/ContinentSelectView.vue';
 import ProfileView from '@/views/ProfileView.vue';
 import MenuView from '@/views/MenuView.vue';
 import LeaderboardView from '@/views/LeaderboardView.vue';
+import TrophiesView from '@/views/TrophiesView.vue';
 import LbViewEx from '@/views/LbViewEx.vue';
 
 const router = createRouter({
@@ -45,6 +47,11 @@ const router = createRouter({
       name: 'capital-quiz',
       component: CapitalQuizView,
     },
+    {
+      path: '/quiz/geomaster/play',
+      name: 'geomaster',
+      component: GeoMasterView,
+    },
     {  
       path: '/auth/success',
       name: 'auth-success',
@@ -64,6 +71,11 @@ const router = createRouter({
       path: '/menu/leaderboard',
       name: 'leaderboard',
       component: LeaderboardView
+    },
+    {
+      path: '/menu/trophies',
+      name: 'trophies',
+      component: TrophiesView,
     },
     {
       path: '/menu/leaderboard-experiment',

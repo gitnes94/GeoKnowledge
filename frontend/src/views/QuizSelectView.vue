@@ -31,6 +31,15 @@ const QUIZ_TYPES = [
     icon: '🏛️',
     route: '/quiz/capital/select',
   },
+  {
+    id: 'geomaster',
+    name: 'GeoMaster',
+    description: 'Res genom världen land för land – kontur, flagga och huvudstad blandat. 3 liv.',
+    icon: '🧭',
+    route: '/quiz/geomaster/select',
+    // GeoMaster har liv i stället för tidsgräns, så lägesvalet visas inte
+    hasModes: false,
+  },
 ]
 
 // id på quiztypen användaren valt, eller null
@@ -41,6 +50,9 @@ const selectedMode = ref(MODES[0])
 
 // Hela objektet för den valda typen (eller undefined)
 const selectedType = computed(() => QUIZ_TYPES.find((type) => type.id === selectedId.value))
+
+// Lägesvalet (vanligt / på tid) visas inte för typer som har hasModes: false
+const showModes = computed(() => selectedType.value?.hasModes !== false)
 
 // En typ går att välja bara om den har en sida
 function isAvailable(type) {
@@ -55,7 +67,7 @@ function selectType(type) {
 
 function startQuiz() {
   if (selectedType.value) {
-    const timeLimit = selectedMode.value.timeLimit
+    const timeLimit = showModes.value ? selectedMode.value.timeLimit : null
     router.push({
       path: selectedType.value.route,
       // ?time=60 följer med till quizet om läget har en tidsgräns
@@ -91,7 +103,7 @@ function startQuiz() {
       <template v-else>Klicka på en quiztyp för att välja den.</template>
     </p>
 
-    <div class="modes">
+    <div v-if="showModes" class="modes">
 
       <button
         v-for="mode in MODES"

@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "fetch-data": "node scripts/fetch-world.js",
     "copy-flags": "node scripts/copy-flags.js",
-    "fetch-capitals": "node scripts/fetch-capitals.js"
+    "fetch-capitals": "node scripts/fetch-capitals.js",
+    "build-neighbors": "node scripts/build-neighbors.js"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
@@ -22,6 +23,8 @@
     "@vitejs/plugin-vue": "^6.0.8",
     "countries-list": "^3.4.1",
     "flag-icons": "^7.5.0",
+    "topojson-client": "^3.1.0",
+    "topojson-server": "^3.0.1",
     "vite": "^8.2.2",
     "vite-plugin-vue-devtools": "^8.2.1"
   },
