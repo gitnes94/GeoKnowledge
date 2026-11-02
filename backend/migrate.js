@@ -32,6 +32,12 @@ async function migrate() {
         console.log('Databasen uppdaterad: kolumnen results.timed lades till')
     }
 
+    // Profilbild från Google
+    if (!(await columnExists('users', 'picture_url'))) {
+        await pool.query('ALTER TABLE users ADD COLUMN picture_url VARCHAR(500) NULL')
+        console.log('Databasen uppdaterad: kolumnen users.picture_url lades till')
+    }
+
     // Troféer: länder man svarat rätt på – tillagd oktober 2026.
     // IF NOT EXISTS gör att inget händer om tabellen redan finns.
     await pool.query(`

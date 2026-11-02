@@ -15,6 +15,8 @@ passport.use(new GoogleStrategy({
     try {
         const email = profile.emails[0].value;
         const username = profile.displayName;
+        // Profilbilden från Google (en länk). Vissa konton saknar bild, då blir den null
+        const pictureUrl = profile.photos?.[0]?.value ?? null;
 
         // Check if user already exists in MySQL
         const [existingUsers] = await pool.query(
@@ -27,14 +29,18 @@ passport.use(new GoogleStrategy({
         if (existingUsers.length > 0) {
             // User exists! Use existing record
             user = existingUsers[0];
+
+            // Uppdatera bilden vid varje inloggning - användaren kan ha bytt bild hos Google
+            await pool.query('' +
+                'UPDATE users SET picture_url = ? WHERE id = ?', [pictureUrl, user.id]);
         } else {
             // User does not exist - create a new user
             const saltRounds = 10;
             let passwordHash = await bcrypt.hash(crypto.randomUUID(), saltRounds);
 
             const [result] = await pool.query(
-                'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
-                [username, email, passwordHash]
+                'INSERT INTO users (username, email, password_hash, picture_url) VALUES (?, ?, ?, ?)',
+                [username, email, passwordHash, pictureUrl]
             );
 
             user = {
@@ -71,7 +77,7 @@ router.get('/google/callback',
 router.get('/me', requireAuth, async (req, res) => {
     try {
         const [users] = await pool.query(
-            'SELECT id, username FROM users WHERE id = ?',
+            'SELECT id, username, picture_url FROM users WHERE id = ?',
             [req.user.id]
         );
 
@@ -81,7 +87,8 @@ router.get('/me', requireAuth, async (req, res) => {
 
         return res.json({
             id: users[0].id,
-            username: users[0].username
+            username: users[0].username,
+            picture_url: users[0].picture_url
         });
     } catch (err) {
         console.error('Kunde inte hämta användarprofil:', err);
