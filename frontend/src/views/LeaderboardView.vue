@@ -67,8 +67,9 @@ onMounted(async () => {
     <header class="hero">
       <div class="hero-copy">
         <h1>Topplistor</h1>
+      <p>Kolla runt bland topplistorna och se vem som ligger bäst till.</p>
+
       </div>
-      
     </header>
 
     <p v-if="isLoading" class="state-message" role="status">Hämtar topplistan …</p>
@@ -177,8 +178,7 @@ onMounted(async () => {
 }
 
 .eyebrow,
-.demo-label,
-.art-caption {
+.demo-label {
   font-size: 0.68rem;
   font-weight: 750;
   letter-spacing: 0.13em;
@@ -199,7 +199,7 @@ h1 {
 
 .hero-copy > p {
   max-width: 27rem;
-  margin: 0.8rem 0 1rem;
+  margin: 0.8rem 0 0;
   color: #d3e3d6;
   font-size: 0.98rem;
   line-height: 1.6;
@@ -213,30 +213,6 @@ h1 {
   color: #e2eee3;
   font-size: 0.61rem;
   letter-spacing: 0.08em;
-}
-
-.hero-art {
-  position: relative;
-  display: grid;
-  place-items: center;
-  align-self: stretch;
-  min-height: 12rem;
-  color: #b7d3b9;
-}
-
-.hero-art svg {
-  width: min(100%, 18rem);
-  max-height: 14rem;
-  overflow: visible;
-}
-
-.art-caption {
-  position: absolute;
-  right: 0;
-  bottom: 0.25rem;
-  color: #c5ddc8;
-  font-size: 0.58rem;
-  letter-spacing: 0.1em;
 }
 
 .category-tabs {
