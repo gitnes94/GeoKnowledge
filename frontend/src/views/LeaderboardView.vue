@@ -136,7 +136,7 @@ onMounted(async () => {
 <style scoped>
 .leaderboard-ex3 {
   --forest: var(--primary-green, #1b4d3e);
-  --muted: #74867b;
+  --muted: #526359;
   width: min(100% - 2rem, 68rem);
   margin: 1.5rem auto 3rem;
   color: var(--forest);
@@ -367,15 +367,15 @@ h1 {
 }
 
 .rank.gold {
-  color: #b17a25;
+  color: #855a15;
 }
 
 .rank.silver {
-  color: #7d8b8c;
+  color: #5b6667;
 }
 
 .rank.bronze {
-  color: #a76e48;
+  color: #7d4d29;
 }
 
 .row-avatar {
