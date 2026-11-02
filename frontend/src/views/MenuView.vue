@@ -13,7 +13,7 @@ const authStore = useAuthStore()
     <div class="menu-items">
       <RouterLink to="/menu/leaderboard" class="menu-card">
         <span class="icon" aria-hidden="true">🏆</span>
-        <span class="name">Topplista</span>
+        <span class="name">Topplistor</span>
         <span class="description">Se vilka spelare som har högst resultat.</span>
       </RouterLink>
 

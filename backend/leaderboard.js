@@ -93,6 +93,7 @@ router.get('/', async (req, res) => {
             contour,
             flags,
             capitals,
+            geoMaster,
             allQuizzes,
             xp,
             quizCount,
@@ -101,6 +102,7 @@ router.get('/', async (req, res) => {
             getAccuracyLeaderboard('shape'),
             getAccuracyLeaderboard('flag'),
             getAccuracyLeaderboard('capital'),
+            getAccuracyLeaderboard('geomaster'),
             getAccuracyLeaderboard(null),
             // Bygger och hämtar XP-topplistan (antal rätt multiplicerat med XP-konstanten)
             getMetricLeaderboard(
@@ -140,6 +142,7 @@ router.get('/', async (req, res) => {
             contour,
             flags,
             capitals,
+            geoMaster,
             allQuizzes,
             xp,
             quizCount,
