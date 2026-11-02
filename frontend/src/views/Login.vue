@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
+import { API_URL } from '@/services/api';
 
 const isLoading = ref(false);
 
@@ -20,7 +21,7 @@ const errorMessage = computed(() => {
 
 const loginWithGoogle = () => {
     isLoading.value = true;
-    window.location.href = 'http://localhost:3000/api/auth/google';
+    window.location.href = `${API_URL}/api/auth/google`;
 };
 </script>
 

@@ -10,6 +10,8 @@ const pool = mysql.createPool({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
+    // Aiven kräver krypterad anslutning, lokalt i Docker behövs det inte
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
 })
 
 module.exports = pool

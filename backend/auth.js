@@ -6,6 +6,9 @@ const pool = require('./db');
 const bcrypt = require('bcrypt');
 const { createToken, requireAuth } = require('./jwt');
 
+// Adressen till frontend. Utan FRONTEND_URL i .env används den lokala adressen
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
 // Configure the Google OAuth2 Strategy
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
@@ -61,8 +64,8 @@ passport.use(new GoogleStrategy({
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'], session: false }));
 
 // Route 2: Google OAuth Callback (Handles the response from Google)
-router.get('/google/callback', 
-    passport.authenticate('google', { session: false, failureRedirect: 'http://localhost:5173/login?error=google' }),
+router.get('/google/callback',
+    passport.authenticate('google', { session: false, failureRedirect: `${FRONTEND_URL}/login?error=google` }),
     (req, res) => {
         // At this point, req.user contains our database user object (either found or newly created)
         
@@ -70,7 +73,7 @@ router.get('/google/callback',
         const token = createToken(req.user);
 
         // Send token back to the Vue frontend
-        res.redirect(`http://localhost:5173/auth/success?token=${token}`);
+        res.redirect(`${FRONTEND_URL}/auth/success?token=${token}`);
     }
 );
 // Route för att hämta användare från databasen och spara i res
@@ -100,7 +103,7 @@ router.get('/me', requireAuth, async (req, res) => {
 // och skickar användaren tillbaka till inloggningssidan i frontend
 router.use((err, req, res, next) => {
     console.error('Login failed:', err);
-    res.redirect('http://localhost:5173/login?error=server');
+    res.redirect(`${FRONTEND_URL}/login?error=server`);
 });
 
 module.exports = router;
