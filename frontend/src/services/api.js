@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/services/auth'
 
 // Adressen till backend
-const API_URL = 'http://localhost:3000'
+export const API_URL = import.meta.env.VITE_API_URL
 
 // Anropar backend och skickar med token om användaren är inloggad
 export async function apiFetch(path, options = {}) {

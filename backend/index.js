@@ -13,8 +13,11 @@ const leaderboardRoutes = require('./leaderboard');
 const trophiesRoutes = require('./trophies');
 const { requireAuth } = require('./jwt');
 
-
 const app = express()
+
+// Render skickar trafiken via en proxy. Då räknas https som rätt protokoll,
+// vilket Google-inloggningen behöver för att bygga callback-adressen.
+app.set('trust proxy', 1)
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))

@@ -71,6 +71,18 @@ Ange "http://127.0.0.1:3000/api/auth/google/callback" som redirect URI på Googl
 
 > ⚠️ Skriv aldrig in riktiga nycklar i `.env.example` – den filen checkas in och syns för alla.
 
+### 3. Skapa din egen `.env` i frontend
+
+**Mac:**
+```bash
+cp frontend/.env.example frontend/.env
+```
+
+**Windows (PowerShell):**
+```powershell
+Copy-Item frontend\.env.example frontend\.env
+```
+
 ---
 
 ## Starta appen
@@ -92,7 +104,7 @@ cd backend
 npm run dev
 ```
 
-Terminalen ska visa `injected env (7) from .env` och `Servern körs på http://localhost:3000`.
+Terminalen ska visa `Servern körs på http://localhost:3000`.
 
 ### 3. Frontenden
 
