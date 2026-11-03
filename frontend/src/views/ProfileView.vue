@@ -24,6 +24,15 @@ const nameError = ref(null)
 const savingName = ref(false)
 // Textrutan – får fokus när formuläret öppnas
 const nameInput = ref(null)
+// Knappen "Ändra namn" – får tillbaka fokus när formuläret stängs, så att
+// den som använder tangentbordet inte hamnar högst upp på sidan
+const editNameButton = ref(null)
+
+async function closeNameForm() {
+  editingName.value = false
+  await nextTick()
+  editNameButton.value?.focus()
+}
 
 async function startEditingName() {
   nameDraft.value = authStore.user?.username || ''
@@ -34,8 +43,8 @@ async function startEditingName() {
 }
 
 function cancelEditingName() {
-  editingName.value = false
   nameError.value = null
+  closeNameForm()
 }
 
 async function saveName() {
@@ -47,7 +56,7 @@ async function saveName() {
     // setUser uppdaterar både profilen och "Inloggad som" i headern direkt.
     const user = await updateUsername(nameDraft.value)
     authStore.setUser(user)
-    editingName.value = false
+    closeNameForm()
   } catch (e) {
     // 400 och 409 är vanliga svar (för kort namn, upptaget) – inget att logga
     if (e.status !== 400 && e.status !== 409) console.error(e)
@@ -65,8 +74,30 @@ async function saveName() {
 
 // true när frågan "Är du säker?" visas
 const confirmingDelete = ref(false)
+// true medan kontot tas bort, och felmeddelandet om det misslyckas
 const deleting = ref(false)
 const deleteError = ref(null)
+// Knapparna som fokus flyttas mellan när frågan öppnas och stängs
+const deleteButton = ref(null)
+const cancelDeleteButton = ref(null)
+
+// Öppnar frågan och flyttar fokus till "Avbryt" – det säkra valet, så att
+// ett oavsiktligt Enter inte tar bort kontot
+async function openDeleteConfirm() {
+  confirmingDelete.value = true
+  deleteError.value = null
+  await nextTick()
+  cancelDeleteButton.value?.focus()
+}
+
+// Stänger frågan och ger tillbaka fokus till "Ta bort konto"
+async function closeDeleteConfirm() {
+  if (deleting.value) return
+  confirmingDelete.value = false
+  deleteError.value = null
+  await nextTick()
+  deleteButton.value?.focus()
+}
 
 async function removeAccount() {
   if (deleting.value) return
@@ -247,7 +278,7 @@ onMounted(() => {
         </form>
         <template v-else>
           <h2 class="profile-name">{{ authStore.user?.username }}</h2>
-          <button v-if="authStore.isLoggedIn" type="button" class="link-button" @click="startEditingName">
+          <button v-if="authStore.isLoggedIn" ref="editNameButton" type="button" class="link-button" @click="startEditingName">
             ✏️ Ändra namn
           </button>
         </template>
@@ -322,14 +353,22 @@ onMounted(() => {
       <div v-if="authStore.isLoggedIn" class="danger-zone">
         <button
             v-if="!confirmingDelete"
+            ref="deleteButton"
             type="button"
             class="button danger"
-            @click="confirmingDelete = true"
+            @click="openDeleteConfirm"
         >
           Ta bort konto
         </button>
 
-        <div v-else class="confirm-delete" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+        <div
+            v-else
+            class="confirm-delete"
+            role="alertdialog"
+            aria-labelledby="confirm-title"
+            aria-describedby="confirm-text"
+            @keydown.esc="closeDeleteConfirm"
+        >
           <h3 id="confirm-title">Vill du ta bort ditt konto?</h3>
           <p id="confirm-text">
             Alla dina resultat, din XP och dina troféer tas bort och går inte att få tillbaka.
@@ -340,7 +379,7 @@ onMounted(() => {
             <button type="button" class="button danger filled" :disabled="deleting" @click="removeAccount">
               {{ deleting ? 'Tar bort…' : 'Ja, ta bort mitt konto' }}
             </button>
-            <button type="button" class="button" :disabled="deleting" @click="confirmingDelete = false; deleteError = null">
+            <button ref="cancelDeleteButton" type="button" class="button" :disabled="deleting" @click="closeDeleteConfirm">
               Avbryt
             </button>
           </div>

@@ -33,3 +33,25 @@ test('emojis och specialtecken avvisas', () => {
         assert.ok(validateUsername(name).error, name);
     }
 });
+
+test('osynliga namn avvisas: bara tecken som ska sitta på en bokstav', () => {
+    // Två "variation selectors" och två kombinerande ringar – syns inte alls
+    assert.ok(validateUsername('\uFE0F\uFE0F').error);
+    assert.ok(validateUsername('\u030A\u030A').error);
+});
+
+test('namn med bara skiljetecken avvisas', () => {
+    for (const name of ['._', '--', "''", '. .', '___']) {
+        assert.ok(validateUsername(name).error, name);
+    }
+});
+
+test('a + kombinerande ring räknas som ett tecken (å), inte två', () => {
+    assert.ok(validateUsername('a\u030A').error, 'bara "å" är för kort');
+    assert.deepEqual(validateUsername('a\u030As'), { username: 'a\u030As' });
+});
+
+test('siffror räcker som synligt innehåll', () => {
+    assert.deepEqual(validateUsername('42'), { username: '42' });
+    assert.deepEqual(validateUsername('R2-D2'), { username: 'R2-D2' });
+});
