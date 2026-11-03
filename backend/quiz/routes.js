@@ -192,7 +192,8 @@ router.post('/start', optionalAuth, startLimiter, async (req, res) => {
 
 // POST /api/quiz/:id/answer
 //   body: { index, option_id }
-//   svar: { correct, correct_id, done }
+//   svar: { correct, correct_id, option_id, done }
+//   Skickas förra frågan igen svarar servern med det redan sparade svaret.
 router.post('/:id/answer', optionalAuth, (req, res) =>
     withLockedSession(req, res, async (connection, session) => {
         const { index, option_id } = req.body ?? {};
@@ -201,13 +202,23 @@ router.post('/:id/answer', optionalAuth, (req, res) =>
             return { status: graded.error.status, body: { error: 'Error', message: graded.error.message } };
         }
 
-        // JSON_ARRAY_APPEND lägger till svaret sist i listan
-        await connection.query(
-            "UPDATE quiz_sessions SET answers = JSON_ARRAY_APPEND(answers, '$', CAST(? AS JSON)) WHERE id = ?",
-            [JSON.stringify(graded.answer), session.id]
-        );
+        // JSON_ARRAY_APPEND lägger till svaret sist i listan. Var frågan redan
+        // besvarad (replay) finns svaret redan sparat.
+        if (!graded.replay) {
+            await connection.query(
+                "UPDATE quiz_sessions SET answers = JSON_ARRAY_APPEND(answers, '$', CAST(? AS JSON)) WHERE id = ?",
+                [JSON.stringify(graded.answer), session.id]
+            );
+        }
 
-        return { body: { correct: graded.correct, correct_id: graded.correct_id, done: graded.done } };
+        return {
+            body: {
+                correct: graded.correct,
+                correct_id: graded.correct_id,
+                option_id: graded.option_id,
+                done: graded.done,
+            },
+        };
     })
 );
 

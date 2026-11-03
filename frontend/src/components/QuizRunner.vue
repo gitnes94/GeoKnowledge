@@ -105,6 +105,9 @@ async function selectAnswer(option) {
     const graded = await props.checkAnswer(index, option.id)
     if (isFinished.value) return // tiden tog slut medan vi väntade
 
+    // Visa svaret servern har sparat. Det är oftast det man klickade på, men
+    // om ett tidigare försök hann sparas innan nätet bröts gäller det i stället.
+    selectedId.value = graded.option_id ?? option.id
     correctId.value = graded.correct_id
     answers.value.push(graded.correct)
     if (graded.correct) {
@@ -114,7 +117,8 @@ async function selectAnswer(option) {
   } catch (e) {
     console.error(e)
     if (isFinished.value) return
-    // 409 = servern tar inte emot fler svar (t.ex. tiden är slut där). Avsluta.
+    // 409 = servern tar inte emot fler svar: tiden är slut, livet är slut eller
+    // quizet är redan avslutat. Avsluta här också.
     if (e.status === 409) {
       finishQuiz()
       return

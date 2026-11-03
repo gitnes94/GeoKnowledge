@@ -37,7 +37,9 @@ export function startQuiz(options) {
   return post('/api/quiz/start', options)
 }
 
-// Svarar på en fråga. Svar: { correct, correct_id, done }
+// Svarar på en fråga. Svar: { correct, correct_id, option_id, done }
+//   option_id – svaret servern har sparat. Skickas samma fråga igen (t.ex. efter
+//               ett nätverksfel) gäller det svar som redan var sparat.
 export function answerQuestion(sessionId, index, optionId) {
   return post(`/api/quiz/${sessionId}/answer`, { index, option_id: optionId })
 }

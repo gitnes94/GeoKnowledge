@@ -51,14 +51,32 @@ function fail(status, message) {
 //   now      – serverns klocka i millisekunder
 //
 // Svar vid OK:
-//   { answer: { option_id, correct, at }, correct, correct_id, done }
-//   done – true om quizet är slut efter det här svaret
+//   { answer: { option_id, correct, at }, correct, correct_id, option_id, done, replay }
+//   option_id – alternativet som är sparat som användarens svar
+//   done      – true om quizet är slut efter det här svaret
+//   replay    – true om frågan redan var besvarad (inget nytt ska sparas)
 function gradeAnswer(session, index, optionId, now) {
     if (session.finished_at !== null) {
         return fail(409, 'Quizet är redan avslutat.');
     }
     if (!Number.isInteger(index) || index < 0 || index >= session.questions.length) {
         return fail(400, 'Ogiltig fråga.');
+    }
+    // Förra frågan skickas igen, t.ex. för att serverns svar försvann på vägen
+    // (nätet bröts efter att svaret sparats). Då skickar vi samma rättning igen
+    // i stället för ett fel – annars skulle quizet avslutas i onödan.
+    // Svaret som redan är sparat gäller, även om ett annat alternativ skickas nu,
+    // så det går inte att ändra sitt svar i efterhand.
+    if (index === session.answers.length - 1) {
+        const previous = session.answers[index];
+        return {
+            answer: previous,
+            correct: previous.correct,
+            correct_id: session.questions[index].country_id,
+            option_id: previous.option_id,
+            done: isOver(session, now),
+            replay: true,
+        };
     }
     // Samma fråga två gånger, eller en fråga längre fram
     if (index !== session.answers.length) {
@@ -85,7 +103,9 @@ function gradeAnswer(session, index, optionId, now) {
         answer,
         correct,
         correct_id: question.country_id,
+        option_id: optionId,
         done: isOver(after, now),
+        replay: false,
     };
 }
 

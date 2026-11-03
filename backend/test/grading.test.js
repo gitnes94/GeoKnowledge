@@ -28,7 +28,7 @@ function makeSession(overrides = {}) {
 // Svarar och lägger till svaret i sessionen, som databasen gör
 function answer(session, optionId, at) {
     const graded = gradeAnswer(session, session.answers.length, optionId, at);
-    if (!graded.error) session.answers.push(graded.answer);
+    if (!graded.error && !graded.replay) session.answers.push(graded.answer);
     return graded;
 }
 
@@ -42,11 +42,46 @@ test('rätt och fel svar rättas', () => {
     assert.equal(wrong.correct_id, 'BBB');
 });
 
-test('samma fråga går inte att svara på två gånger', () => {
+test('samma fråga skickad igen ger samma rättning, inget nytt sparas', () => {
+    // T.ex. när serverns svar försvann på vägen och klienten försöker igen
     const session = makeSession();
     answer(session, 'BBB', START + 1000);
-    const again = gradeAnswer(session, 0, 'AAA', START + 2000);
-    assert.equal(again.error.status, 409);
+    const again = gradeAnswer(session, 0, 'BBB', START + 2000);
+    assert.equal(again.replay, true);
+    assert.equal(again.correct, false);
+    assert.equal(again.correct_id, 'AAA');
+    assert.equal(again.option_id, 'BBB');
+    assert.equal(session.answers.length, 1);
+});
+
+test('det går inte att byta svar genom att skicka frågan igen', () => {
+    const session = makeSession();
+    answer(session, 'BBB', START + 1000);
+    const changed = gradeAnswer(session, 0, 'AAA', START + 2000);
+    assert.equal(changed.replay, true);
+    assert.equal(changed.correct, false, 'det första svaret gäller');
+    assert.equal(changed.option_id, 'BBB');
+});
+
+test('en fråga längre bak än den förra går inte att svara på igen', () => {
+    const session = makeSession();
+    answer(session, 'AAA', START + 1000);
+    answer(session, 'BBB', START + 2000);
+    const old = gradeAnswer(session, 0, 'AAA', START + 3000);
+    assert.equal(old.error.status, 409);
+});
+
+test('vanligt svar: option_id är det valda alternativet, replay false', () => {
+    const graded = gradeAnswer(makeSession(), 0, 'CCC', START + 1000);
+    assert.equal(graded.option_id, 'CCC');
+    assert.equal(graded.replay, false);
+});
+
+test('avslutat quiz svarar 409 även på en upprepning', () => {
+    const session = makeSession();
+    answer(session, 'AAA', START + 1000);
+    session.finished_at = START + 1500;
+    assert.equal(gradeAnswer(session, 0, 'AAA', START + 2000).error.status, 409);
 });
 
 test('man kan inte hoppa fram till en senare fråga', () => {
