@@ -60,8 +60,8 @@ onMounted(async () => {
 <template>
     <div class="auth-loading-container">
         <div class="spinner"></div>
-        <h2>Logging you in...</h2>
-        <p>Please wait while we complete your authentication.</p>
+        <h2>Loggar in…</h2>
+        <p>Vänta medan vi loggar in dig.</p>
     </div>
 </template>
 
@@ -71,15 +71,14 @@ onMounted(async () => {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
-    font-family: Arial, sans-serif;
+    padding: 3rem 1rem;
 }
 .spinner {
-    border: 4px solid rgba(0, 0, 0, 0.1);
+    border: 4px solid rgba(27, 77, 62, 0.15);
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    border-left-color: #42b883;
+    border-left-color: var(--primary-green, #1b4d3e);
     animation: spin 1s linear infinite;
     margin-bottom: 1rem;
 }
