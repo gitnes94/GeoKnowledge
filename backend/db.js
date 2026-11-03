@@ -17,6 +17,7 @@ function sslOptions() {
     return {
         ca: fs.readFileSync(process.env.DB_CA_PATH),
         rejectUnauthorized: true,
+        verifyIdentity: true,
     }
 }
 
