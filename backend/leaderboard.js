@@ -16,12 +16,13 @@ async function getAccuracyLeaderboard(quizType) {
         SELECT
             u.id AS user_id,
             u.username,
+            u.picture_url,
             SUM(r.correct_count) AS correct_answers,
             SUM(r.total) AS total_questions
         FROM results r
         JOIN users u ON u.id = r.user_id
         ${filter}
-        GROUP BY u.id, u.username
+        GROUP BY u.id, u.username, u.picture_url
         HAVING SUM(r.total) > 0
         ORDER BY
             SUM(r.correct_count) / SUM(r.total) DESC,
@@ -38,6 +39,9 @@ async function getAccuracyLeaderboard(quizType) {
         const result = {
             userId: Number(row.user_id),
             username: row.username,
+            // Profilbilden från Google (null om den saknas), så att spelare
+            // med samma namn går att skilja åt på topplistan
+            pictureUrl: row.picture_url ?? null,
             correctAnswers: Number(row.correct_answers),
             totalQuestions: Number(row.total_questions),
         };
@@ -81,6 +85,7 @@ async function getMetricLeaderboard(sql, params, scoreField) {
             place,
             userId: Number(row.user_id),
             username: row.username,
+            pictureUrl: row.picture_url ?? null,
             [scoreField]: score,
         };
     });
@@ -110,10 +115,11 @@ router.get('/', async (req, res) => {
                 SELECT
                     u.id AS user_id,
                     u.username,
+                    u.picture_url,
                     COALESCE(SUM(r.correct_count), 0) * ? + COALESCE(SUM(r.bonus_xp), 0) AS xp
                 FROM results r
                 JOIN users u ON u.id = r.user_id
-                GROUP BY u.id, u.username
+                GROUP BY u.id, u.username, u.picture_url
                 ORDER BY xp DESC, u.username ASC
                 LIMIT 10
                 `,
@@ -126,10 +132,11 @@ router.get('/', async (req, res) => {
                 SELECT
                     u.id AS user_id,
                     u.username,
+                    u.picture_url,
                     COUNT(*) AS quiz_count
                 FROM results r
                 JOIN users u ON u.id = r.user_id
-                GROUP BY u.id, u.username
+                GROUP BY u.id, u.username, u.picture_url
                 ORDER BY quiz_count DESC, u.username ASC
                 LIMIT 10
                 `,
