@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test",
     "start": "node index.js",
     "dev": "node --watch index.js"
   },
@@ -16,6 +16,7 @@
     "cors": "^2.8.6",
     "dotenv": "^18.0.3",
     "express": "^5.3.0",
+    "express-rate-limit": "^8.7.3",
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.24.6",
     "passport": "^0.7.0",

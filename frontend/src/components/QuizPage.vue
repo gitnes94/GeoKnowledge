@@ -1,225 +1,87 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+// Gemensam sida för konturquiz, flaggquiz och huvudstadsquiz.
+// Frågorna skapas och rättas på servern (se useQuizSession), så webbläsaren
+// vet aldrig rätt svar i förväg.
+import { computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { createQuestions, getRegionCountries, CONTINENTS, MODES } from '../services/quiz.js'
-import { getSeenIds, markSeen } from '../services/quizHistory.js'
-import { saveResult } from '../services/results.js'
-import { useAuthStore } from '../services/auth'
-import { startTrophyCheck, findNewTrophies } from '../services/trophies.js'
+import { CONTINENTS, MODES } from '../services/quiz.js'
+import { useQuizSession } from '../composables/useQuizSession.js'
 import QuizRunner from './QuizRunner.vue'
-import XpBar from './XpBar.vue'
-import NewTrophies from './NewTrophies.vue'
-
+import QuestionPrompt from './QuestionPrompt.vue'
+import QuizRewards from './QuizRewards.vue'
 
 // Det som skiljer quizen åt skickas in från vyn
 const props = defineProps({
   // Rubriken ovanför frågan, t.ex. 'Vilket land har den här flaggan?'
   title: { type: String, required: true },
-  // Quiztypen som sparas med resultatet, t.ex. 'flag'
+  // Quiztypen, t.ex. 'flag'
   quizType: { type: String, required: true },
-  // Kartdatan som frågorna skapas från. null tills vyn har laddat den.
-  world: { type: Object, default: null },
-  // Felmeddelande om vyn inte kunde ladda datan
-  error: { type: String, default: null },
 })
-
 
 const route = useRoute()
 
-// Tidsgränsen från adressen (?time=60), eller null om quizet inte är på tid.
-// Bara tider som finns i MODES godtas, så att ingen kan skriva in en egen tid.
-const timeLimit = computed(() => {
+// Spelas quizet på tid? Bara tider som finns i MODES godtas (?time=60).
+// Hur lång tiden är bestämmer servern.
+const timed = computed(() => {
   const time = Number(route.query.time)
-  return MODES.some((mode) => mode.timeLimit === time) ? time : null
+  return MODES.some((mode) => mode.timeLimit !== null && mode.timeLimit === time)
 })
 
-// Hur många frågor ett quiz har
-const QUESTION_COUNT = 10
-
-
-// Frågorna som skickas till QuizRunner
-const questions = ref([])
-
-// Resultatet från QuizRunner när quizet är klart, annars null
-const result = ref(null)
-
-// Ökas varje ny omgång. Används som :key på QuizRunner så att
-// komponenten skapas på nytt och börjar om från fråga 1.
-const round = ref(0)
-
-// Världsdelen quizet spelas för, t.ex. 'Europe' – sparas med resultatet
-const continent = ref('World')
-
-
-// Inloggningen. authStore.token finns bara om användaren är inloggad.
-const authStore = useAuthStore()
-
-// Hur det gick att spara resultatet:
-//   'idle'          – inget sparat än
-//   'saving'        – skickar till backenden
-//   'saved'         – sparat
-//   'not-logged-in' – inte inloggad, inget skickas
-//   'expired'       – inloggningen har gått ut (401)
-//   'error'         – något annat gick fel
-const saveStatus = ref('idle')
-
-// XP från backenden efter sparningen: { gained, total, level, leveledUp, ... }
-const xp = ref(null)
-
-// Troféer som låstes upp av quizet – visas på slutskärmen
-const newTrophies = ref([])
-
-// Användarens trofésiffror från när quizet startade. Jämförs med siffrorna
-// efter sparningen för att se vilka troféer som är nya.
-let trophiesBefore = null
-
-
-// Startar en ny omgång med nya slumpade frågor
-function startQuiz() {
-  const queryContinent = route.query.continent
-  continent.value = Object.keys(CONTINENTS).includes(queryContinent)
-      ? queryContinent
-      : 'World'
-
-  // Länder man redan fått i tidigare quiz väljs sist
-  const seenIds = getSeenIds(props.quizType, continent.value)
-  questions.value = createQuestions(props.world, QUESTION_COUNT, continent.value, seenIds)
-  result.value = null
-  saveStatus.value = 'idle'
-  xp.value = null
-  newTrophies.value = []
-  trophiesBefore = authStore.token ? startTrophyCheck() : null
-  round.value++
+// Världsdelen från adressen (?continent=Europe), annars hela världen
+function region() {
+  const continent = route.query.continent
+  return Object.keys(CONTINENTS).includes(continent) ? continent : 'World'
 }
 
+// useHistory: länder man redan fått i tidigare quiz väljs sist
+const quiz = useQuizSession(
+  props.quizType,
+  () => ({ region: region(), timed: timed.value }),
+  { useHistory: true }
+)
+const { status, error, session, result, saveStatus, xp, newTrophies, round } = quiz
 
-// Vyn laddar datan själv. Quizet startar när den finns.
-watch(() => props.world, (world) => {
-  if (world) startQuiz()
-}, { immediate: true })
-
-
-// QuizRunner skickar { correct_count, total, answers } när sista frågan är besvarad.
-// Resultatet visas direkt och sparas sedan i backenden om användaren är inloggad.
-async function onFinished(quizResult) {
-  result.value = quizResult
-
-  // Kom ihåg vilka länder som var med, så att de inte kommer igen
-  // förrän alla länder i världsdelen har varit med
-  markSeen(
-      props.quizType,
-      continent.value,
-      questions.value.map((question) => question.correct.id),
-      getRegionCountries(props.world, continent.value).map((country) => country.id)
-  )
-
-  // Inte inloggad: quizet fungerar ändå, men inget sparas
-  if (!authStore.token) {
-    saveStatus.value = 'not-logged-in'
-    return
-  }
-
-  saveStatus.value = 'saving'
-
-  // Vilken omgång resultatet hör till. Hinner användaren klicka "Spela igen"
-  // innan backenden svarat ska det gamla svaret inte visas i den nya omgången.
-  const thisRound = round.value
-
-
-  try {
-    const saved = await saveResult({
-      quiz_type: props.quizType,
-      region: continent.value,
-      correct_count: quizResult.correct_count,
-      total: quizResult.total,
-      timed: timeLimit.value !== null,
-      completed: quizResult.completed,
-      seconds_left: quizResult.seconds_left,
-      answers: quizResult.answers, // behövs för combo-bonusen
-      // Landet som var rätt svar på varje fråga – för mästartroféerna
-      country_ids: questions.value.map((question) => question.correct.id),
-    })
-    if (thisRound !== round.value) return
-    xp.value = saved.xp
-    saveStatus.value = 'saved'
-  } catch (e) {
-    console.error(e)
-    if (thisRound !== round.value) return
-    // 401 = token saknas, är ogiltig eller har gått ut
-    saveStatus.value = e.status === 401 ? 'expired' : 'error'
-    return
-  }
-
-
-  // Leta efter nya troféer. Går det inte visas bara inga – resultatet är ju sparat.
-  try {
-    const found = await findNewTrophies(trophiesBefore)
-    if (thisRound !== round.value) return
-    newTrophies.value = found
-  } catch (e) {
-    console.error(e)
-  }
-}
+onMounted(quiz.start)
 </script>
 
 <template>
   <section class="quiz-page">
-    <p v-if="error" class="status">Något gick fel: {{ error }}</p>
+    <p v-if="status === 'error'" class="status">Något gick fel: {{ error }}</p>
 
-    <p v-else-if="!world" class="status">Laddar quiz…</p>
-
+    <p v-else-if="status === 'loading'" class="status">Laddar quiz…</p>
 
     <!-- Slutskärmen när sista frågan är besvarad -->
-    <div v-else-if="result" class="finished">
+    <div v-else-if="status === 'finished'" class="finished">
       <h2>Klart!</h2>
-      <p v-if="timeLimit" class="timed-badge">⏱ Spelat på tid</p>
+      <p v-if="session.time_limit" class="timed-badge">⏱ Spelat på tid</p>
       <p class="final-score">{{ result.correct_count }} av {{ result.total }} rätt</p>
 
-
-      <!-- Visar om resultatet sparades -->
-      <p v-if="saveStatus === 'saving'" class="save-status">Sparar resultatet…</p>
-      <p v-else-if="saveStatus === 'saved'" class="save-status success">✓ Resultatet är sparat</p>
-      <p v-else-if="saveStatus === 'not-logged-in'" class="save-status">
-        <RouterLink to="/login">Logga in</RouterLink> för att spara dina resultat.
-      </p>
-      <p v-else-if="saveStatus === 'expired'" class="save-status warning">
-        Din inloggning har gått ut. <RouterLink to="/login">Logga in igen</RouterLink> för att spara.
-      </p>
-      <p v-else-if="saveStatus === 'error'" class="save-status warning">
-        Resultatet kunde inte sparas just nu.
-      </p>
-
-
-      <!-- XP och nivå, visas när resultatet har sparats -->
-      <XpBar
-          v-if="xp"
-          :level="xp.level"
-          :xp-into-level="xp.xpIntoLevel"
-          :xp-per-level="xp.xpPerLevel"
-          :gained="xp.gained"
-          :bonus="xp.bonus"
-          :timed-bonus="xp.timedBonus"
-          :leveled-up="xp.leveledUp"
-      />
-
-      <!-- Troféer som låstes upp av det här quizet -->
-      <NewTrophies :trophies="newTrophies" />
+      <!-- Om resultatet sparades, XP och nya troféer -->
+      <QuizRewards :save-status="saveStatus" :xp="xp" :new-trophies="newTrophies" />
 
       <div class="actions">
-        <button class="primary" @click="startQuiz">Spela igen</button>
+        <button class="primary" @click="quiz.start">Spela igen</button>
         <RouterLink to="/quiz" class="secondary">Välj ett annat quiz</RouterLink>
       </div>
     </div>
 
-
     <template v-else>
       <h2>{{ title }}</h2>
 
-      <!-- QuizRunner sköter frågorna, knapparna och poängen.
-           Det vyn skickar in i sloten visas ovanför svarsalternativen. -->
-      <QuizRunner :key="round" :questions="questions" :time-limit="timeLimit" @finished="onFinished">
+      <!-- QuizRunner sköter knapparna och poängen och frågar servern om svaren.
+           Vyn kan skicka in egen markup i sloten – annars visas QuestionPrompt
+           (konturen, flaggan eller huvudstaden från servern). -->
+      <QuizRunner
+          :key="round"
+          :questions="session.questions"
+          :check-answer="quiz.answer"
+          :time-limit="session.time_limit"
+          @finished="quiz.onFinished"
+      >
         <template #default="{ question }">
-          <slot :question="question" />
+          <slot :question="question">
+            <QuestionPrompt :question="question" />
+          </slot>
         </template>
       </QuizRunner>
     </template>
@@ -228,6 +90,11 @@ async function onFinished(quizResult) {
 
 <style scoped>
 .quiz-page {
+  /* CountryShape färgar landet med de här variablerna. Vi skriver över dem
+     bara inuti quizet, så att landet blir grönt som på startsidans karta. */
+  --color-country: #41ac5a;
+  --color-accent: var(--primary-green, #1b4d3e);
+
   max-width: 44rem;
   margin: 1.5rem auto;
   padding: 2rem 1.5rem;
@@ -246,7 +113,6 @@ h2 {
 .status {
   opacity: 0.7;
 }
-
 
 .final-score {
   margin: 0.5rem 0 0;
@@ -281,27 +147,6 @@ h2 {
 .secondary {
   color: var(--primary-green, #1b4d3e);
   background: #ffffff;
-}
-
-
-/* Meddelandet om resultatet sparades */
-.save-status {
-  margin: 0.75rem 0 0;
-  font-size: 0.95rem;
-}
-
-.save-status.success {
-  color: #2f9e4f;
-  font-weight: 700;
-}
-
-.save-status.warning {
-  color: #b5452f;
-}
-
-.save-status a {
-  color: inherit;
-  font-weight: 700;
 }
 
 /* Visar på slutskärmen att quizet spelades på tid */

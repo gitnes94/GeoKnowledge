@@ -11,6 +11,7 @@ const resultsRoutes = require('./results');
 const progressRoutes = require('./progress');
 const leaderboardRoutes = require('./leaderboard');
 const trophiesRoutes = require('./trophies');
+const quizRoutes = require('./quiz/routes');
 const { requireAuth } = require('./jwt');
 
 const app = express()
@@ -28,6 +29,8 @@ app.use('/api/results', requireAuth, resultsRoutes)
 app.use('/api/progress', requireAuth, progressRoutes)
 app.use('/api/trophies', requireAuth, trophiesRoutes)
 app.use('/api/leaderboard', leaderboardRoutes);
+// Quizet – går att spela utan inloggning, därför ingen requireAuth här
+app.use('/api/quiz', quizRoutes);
 
 app.get('/api/health', async (req, res) => {
     try {
