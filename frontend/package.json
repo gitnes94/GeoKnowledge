@@ -10,7 +10,8 @@
     "fetch-data": "node scripts/fetch-world.js",
     "copy-flags": "node scripts/copy-flags.js",
     "fetch-capitals": "node scripts/fetch-capitals.js",
-    "build-neighbors": "node scripts/build-neighbors.js"
+    "build-neighbors": "node scripts/build-neighbors.js",
+    "build-quiz-data": "node scripts/build-quiz-data.js"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",

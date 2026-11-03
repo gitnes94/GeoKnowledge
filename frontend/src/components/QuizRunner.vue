@@ -1,9 +1,13 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-// Komponenten får en lista med frågor från createQuestions i quiz.js
+// Komponenten visar frågorna en i taget. Den vet INTE vilket svar som är rätt –
+// den frågar servern via checkAnswer och färgar knapparna efter svaret.
 const props = defineProps({
-  questions: {type: Array, required: true},
+  // Frågorna från servern: [{ kind, options: [{ id, name }], shape?, flag?, capital? }, ...]
+  questions: { type: Array, required: true },
+  // Rättar ett svar: (index, optionId) => Promise<{ correct, correct_id }>
+  checkAnswer: { type: Function, required: true },
   // Tidsgräns för hela quizet i sekunder (null = ingen tidsgräns)
   timeLimit: { type: Number, default: null },
   // Antal liv: så många fel får man göra innan quizet tar slut (null = inga liv)
@@ -11,8 +15,8 @@ const props = defineProps({
 })
 
 // Events som komponenten skickar till föräldern
-//   finished – quizet är slut: { correct_count, total, answers }
-//   answered – en fråga är besvarad: { index, correct } (t.ex. för GeoMaster-kartan)
+//   finished – quizet är slut: { correct_count, total }
+//   answered – en fråga är besvarad: { index, correct, correctId } (t.ex. för GeoMaster-kartan)
 const emit = defineEmits(['finished', 'answered'])
 
 // Combo: från 5 rätt i rad ger varje rätt svar 20 % extra XP.
@@ -29,6 +33,15 @@ const correctCount = ref(0)
 
 // Id på svaret användaren valt på frågan (null = inget svar)
 const selectedId = ref(null)
+
+// Id på rätt svar, när servern har berättat det (null = inte rättat än)
+const correctId = ref(null)
+
+// true medan vi väntar på att servern ska rätta svaret
+const checking = ref(false)
+
+// Felmeddelande om svaret inte kom fram till servern
+const answerError = ref(null)
 
 // Blir true när quizet är slut, så att resultatet bara skickas en gång
 const isFinished = ref(false)
@@ -55,21 +68,26 @@ const outOfLives = computed(() => livesLeft.value !== null && livesLeft.value <=
 
 // true när combon är igång och rätta svar ger bonus
 const comboActive = computed(() => streak.value >= COMBO_START)
+
 // Sekunder kvar på tidsgränsen (null = ingen tidsgräns)
 const secondsLeft = ref(props.timeLimit)
 
 // Id på timern, så att den kan stoppas
 let timerId = null
 
-// Tidpunkten då tiden tar slut (i millisekunder), sätts när timern startar
+// Tidpunkten då tiden tar slut (i millisekunder), sätts när timern startar.
+// Servern har sin egen klocka – den här visar bara nedräkningen.
 let deadline = null
 
 // Frågan som visas just nu
 const currentQuestion = computed(() => props.questions[currentIndex.value])
 
+// true när frågan är besvarad och rättad
+const isAnswered = computed(() => correctId.value !== null)
+
 // Körs när användaren klickar på ett svarsalternativ
-function selectAnswer(option) {
-  if (selectedId.value !== null || isFinished.value) {
+async function selectAnswer(option) {
+  if (selectedId.value !== null || checking.value || isFinished.value) {
     return
   }
   // Tiden kan ha tagit slut mellan två tick – då räknas inte svaret
@@ -77,32 +95,50 @@ function selectAnswer(option) {
     finishQuiz()
     return
   }
-  // Tiden kan ha tagit slut mellan två tick – då räknas inte svaret
-  if (deadline && Date.now() >= deadline) {
-    finishQuiz()
-    return
-  }
+
+  const index = currentIndex.value
   selectedId.value = option.id
-  const isRight = option.id === currentQuestion.value.correct.id
-  answers.value.push(isRight)
-  if (isRight) {
-    correctCount.value++
+  checking.value = true
+  answerError.value = null
+
+  try {
+    const graded = await props.checkAnswer(index, option.id)
+    if (isFinished.value) return // tiden tog slut medan vi väntade
+
+    correctId.value = graded.correct_id
+    answers.value.push(graded.correct)
+    if (graded.correct) {
+      correctCount.value++
+    }
+    emit('answered', { index, correct: graded.correct, correctId: graded.correct_id })
+  } catch (e) {
+    console.error(e)
+    if (isFinished.value) return
+    // 409 = servern tar inte emot fler svar (t.ex. tiden är slut där). Avsluta.
+    if (e.status === 409) {
+      finishQuiz()
+      return
+    }
+    // Annars gick svaret inte fram – låt användaren försöka igen
+    selectedId.value = null
+    answerError.value = 'Svaret kom inte fram. Försök igen.'
+  } finally {
+    checking.value = false
   }
-  emit('answered', { index: currentIndex.value, correct: isRight })
 }
 
-// Grönt: rätt svar (efter att användaren har svarat)
+// Grönt: rätt svar (efter att servern har rättat)
 function isCorrect(option) {
-  return selectedId.value !== null && option.id === currentQuestion.value.correct.id
+  return isAnswered.value && option.id === correctId.value
 }
 
-// Rött: användarens svar, om det var fel (efter att användaren har svarat)
+// Rött: användarens svar, om det var fel (efter att servern har rättat)
 function isWrong(option) {
-  return option.id === selectedId.value && option.id !== currentQuestion.value.correct.id
+  return isAnswered.value && option.id === selectedId.value && option.id !== correctId.value
 }
 
-// Avslutar quizet och skickar resultatet.
-// Används både när sista frågan är klar och när tiden tar slut.
+// Avslutar quizet och skickar resultatet till föräldern, som avslutar
+// quizet på servern. Används både när sista frågan är klar och när tiden tar slut.
 function finishQuiz() {
   if (isFinished.value) {
     return
@@ -112,19 +148,6 @@ function finishQuiz() {
   emit('finished', {
     correct_count: correctCount.value,
     total: props.questions.length,
-    // Tar tiden slut räknas obesvarade frågor som fel, så att listan
-    // alltid har ett svar per fråga (det kontrollerar backenden)
-    answers: [
-      ...answers.value,
-      ...Array(props.questions.length - answers.value.length).fill(false),
-    ],
-    // Hann användaren svara på alla frågor? Blir false om tiden tog slut innan.
-    completed: answers.value.length === props.questions.length,
-    // Sekunder kvar när quizet tog slut. Bara när quizet har en tidsgräns,
-    // annars undefined, och då skickas fältet inte alls till backend.
-    seconds_left: props.timeLimit
-        ? Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
-        : undefined,
   })
 }
 
@@ -141,6 +164,7 @@ function nextQuestion() {
 
   currentIndex.value++
   selectedId.value = null
+  correctId.value = null
 }
 
 // Räknar ut hur lång tid som är kvar. När tiden är slut avslutas quizet.
@@ -200,15 +224,17 @@ onUnmounted(stopTimer)
             v-for="option in currentQuestion.options"
             :key="option.id"
             class="option"
-            :class="{ selected: option.id === selectedId, correct: isCorrect(option), wrong: isWrong(option) }"
-            :disabled="selectedId !== null || isFinished"
+            :class="{ selected: option.id === selectedId, checking: checking && option.id === selectedId, correct: isCorrect(option), wrong: isWrong(option) }"
+            :disabled="selectedId !== null || checking || isFinished"
             @click="selectAnswer(option)"
         >
           {{ option.name }}
         </button>
       </div>
 
-      <button v-if="selectedId !== null"
+      <p v-if="answerError" class="answer-error" role="alert">{{ answerError }}</p>
+
+      <button v-if="isAnswered"
               class="next"
               :disabled="isFinished"
               @click="nextQuestion">
@@ -356,6 +382,28 @@ button {
   background: var(--color-wrong);
   border-color: var(--color-wrong);
   box-shadow: 0 0 0 4px rgba(198, 40, 40, 0.3);
+}
+
+/* Medan servern rättar svaret pulserar det valda alternativet lite */
+.option.checking {
+  animation: checking 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes checking {
+  from { box-shadow: 0 0 0 2px rgba(65, 172, 90, 0.2); }
+  to { box-shadow: 0 0 0 6px rgba(65, 172, 90, 0.45); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .option.checking {
+    animation: none;
+  }
+}
+
+.answer-error {
+  margin: 1rem 0 0;
+  color: var(--color-wrong);
+  font-weight: 700;
 }
 
 .next {
