@@ -7,8 +7,11 @@ import { geoNaturalEarth1, geoPath, geoCentroid } from 'd3'
 const props = defineProps({
   // Kartdatan från loadWorld()
   world: { type: Object, required: true },
-  // Alla länder i resan (id), så att kartan zoomar in på rätt område
-  journeyIds: { type: Array, required: true },
+  // Området kartan ska visa, från servern: { center: [lon, lat], span: [lon, lat] }.
+  // Servern räknar ut det, eftersom resvägen (= alla rätt svar) inte skickas hit.
+  view: { type: Object, required: true },
+  // Antal länder i resan, för skärmläsare
+  total: { type: Number, required: true },
   // De länder man har svarat på hittills, i ordning: [{ id: 'SWE', correct: true }, ...]
   visited: { type: Array, required: true },
 })
@@ -22,11 +25,6 @@ const padding = 24
 const POSITION_OVERRIDES = {
   RUS: [37.6, 55.75], // Moskva
 }
-
-// Minsta område kartan visar, i grader, så att den inte zoomar in för mycket
-// när resan går genom små länder
-const MIN_SPAN_LON = 30
-const MIN_SPAN_LAT = 16
 
 // Antarktis visas inte, precis som på startsidan
 const features = computed(() =>
@@ -42,25 +40,12 @@ function positionOf(id) {
   return POSITION_OVERRIDES[id] || geoCentroid(featuresById.value.get(id))
 }
 
-// Projektionen zoomar in på resans länder. Vi utgår från ländernas
-// mittpunkter (inte hela länderna), annars skulle t.ex. Ryssland eller
-// Grönland göra att kartan alltid visar halva jorden.
+// Projektionen zoomar in på området servern skickat. Rutan görs 20 % större
+// än resan så att det blir lite luft runt länderna.
 const projection = computed(() => {
-  const points = props.journeyIds.filter((id) => featuresById.value.has(id)).map(positionOf)
-  let lons = points.map(([lon]) => lon)
-  const lats = points.map(([, lat]) => lat)
-
-  // Datumlinjen: går resan över ±180° (t.ex. Fiji i Oceanien) skulle rutan
-  // annars bli hela jorden bred. Då räknar vi västliga längder som +360°.
-  if (Math.max(...lons) - Math.min(...lons) > 180) {
-    lons = lons.map((lon) => (lon < 0 ? lon + 360 : lon))
-  }
-
-  // Rutan runt alla mittpunkter, minst MIN_SPAN stor, plus lite marginal
-  const centerLon = (Math.min(...lons) + Math.max(...lons)) / 2
-  const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2
-  const halfLon = Math.max(Math.max(...lons) - Math.min(...lons), MIN_SPAN_LON) / 2 * 1.2
-  const halfLat = Math.max(Math.max(...lats) - Math.min(...lats), MIN_SPAN_LAT) / 2 * 1.2
+  const [centerLon, centerLat] = props.view.center
+  const halfLon = (props.view.span[0] / 2) * 1.2
+  const halfLat = (props.view.span[1] / 2) * 1.2
   const corners = {
     type: 'MultiPoint',
     coordinates: [
@@ -113,7 +98,7 @@ const routePoints = computed(() => stops.value.map((stop) => `${stop.x},${stop.y
     class="route-map"
     :viewBox="`0 0 ${width} ${height}`"
     role="img"
-    :aria-label="`Karta över resan: ${visited.length} av ${journeyIds.length} länder besökta`"
+    :aria-label="`Karta över resan: ${visited.length} av ${total} länder besökta`"
   >
     <path v-for="country in countries" :key="country.id" :d="country.d" class="country" :class="country.state" />
     <polyline v-if="stops.length > 1" :points="routePoints" class="route" />

@@ -1,1 +1,5 @@
 * text=auto eol=lf
+
+# Genererad landdata för backenden (npm run build-quiz-data i frontend).
+# Visas inte rad för rad i diffar och pull requests.
+backend/data/quiz-data.json linguist-generated=true -diff

@@ -37,4 +37,23 @@ function requireAuth(req, res, next) {
     }
 }
 
-module.exports = { createToken, requireAuth }
+// Som requireAuth, men släpper igenom även den som inte är inloggad.
+// Används av quizet, som går att spela som gäst (då sparas inget).
+//   req.user        – sätts bara om token är giltig
+//   req.authExpired – true om det fanns en token men den var ogiltig eller utgången
+function optionalAuth(req, res, next) {
+    const header = req.headers.authorization
+
+    if (header && header.startsWith('Bearer ')) {
+        try {
+            const payload = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET)
+            req.user = { id: payload.id, username: payload.username }
+        } catch {
+            req.authExpired = true
+        }
+    }
+
+    next()
+}
+
+module.exports = { createToken, requireAuth, optionalAuth }

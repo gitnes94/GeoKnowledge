@@ -53,6 +53,29 @@ async function migrate() {
                 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
         )
     `)
+
+    // Quiz som körs på servern (facit och tid sparas här) – tillagd november 2026
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS quiz_sessions
+        (
+            id          CHAR(36)    NOT NULL PRIMARY KEY,
+            user_id     INT         NULL,
+            quiz_type   VARCHAR(30) NOT NULL,
+            region      VARCHAR(30) NOT NULL,
+            time_limit  INT         NULL,
+            lives       INT         NULL,
+            questions   JSON        NOT NULL,
+            answers     JSON        NOT NULL,
+            started_at  BIGINT      NOT NULL,
+            finished_at BIGINT      NULL,
+            result_id   INT         NULL,
+            created_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+            INDEX idx_quiz_sessions_created_at (created_at),
+            CONSTRAINT fk_quiz_sessions_user
+                FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        )
+    `)
 }
 
 module.exports = migrate

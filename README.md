@@ -121,7 +121,30 @@ npm run dev
 | Backend – hälsokontroll | http://localhost:3000/api/health |
 | Adminer (se databasen) | http://localhost:8080 – server `db`, användare `root`, lösenord `geopass` |
 
-Quizet fungerar med bara frontenden igång. Backend och databas behövs för konton och sparade resultat.
+Backenden och databasen måste vara igång även för att spela, eftersom frågorna skapas och rättas på servern (se *Så fungerar quizet* nedan). Gäster kan spela utan konto, men då sparas inget.
+
+---
+
+## Så fungerar quizet
+
+Frågorna skapas och rättas **på servern**. Webbläsaren får aldrig veta rätt svar innan man har svarat, och tiden mäts med serverns klocka. Därför går det inte att fuska sig till poäng eller XP genom att skicka in ett eget resultat.
+
+1. `POST /api/quiz/start` – servern skapar frågorna och sparar facit i tabellen `quiz_sessions`. Webbläsaren får frågorna utan facit: konturen, flaggan (som bild utan landskod) eller huvudstaden, plus fyra svarsalternativ.
+2. `POST /api/quiz/:id/answer` – servern rättar ett svar i taget och svarar med rätt svar. Frågorna måste besvaras i ordning, en gång var. Svar efter tidsgränsen (eller efter sista livet i GeoMaster) tas inte emot.
+3. `POST /api/quiz/:id/finish` – servern räknar ihop resultatet, sparar det i `results` (om man är inloggad) och räknar ut XP.
+
+Man kan starta högst 40 quiz per 10 minuter. Gamla rader i `quiz_sessions` tas bort efter ett dygn.
+
+Koden finns i `backend/quiz/`. Reglerna för rättning och tid ligger i `grading.js`, utan databas, så att de går att testa (`npm test` i backend).
+
+### Kartdatan i backenden
+
+Backenden har en egen kopia av landdatan i `backend/data/quiz-data.json` (länder, huvudstäder, grannländer, konturer och flaggor). Den byggs från frontendens filer. **Har kartdatan, huvudstäderna, grannländerna eller flaggorna ändrats?** Kör då:
+
+```bash
+cd frontend
+npm run build-quiz-data
+```
 
 ---
 
@@ -135,8 +158,12 @@ GeoKnowledge/
 │   ├── db.js                 ← anslutning till MySQL
 │   ├── jwt.js                ← skapar inloggningstoken
 │   ├── .env.example          ← mall för .env
+│   ├── quiz/                 ← skapar, rättar och sparar quiz (routes, grading, questions)
+│   ├── data/
+│   │   └── quiz-data.json    ← landdatan för quizet (npm run build-quiz-data)
+│   ├── test/                 ← tester (npm test)
 │   └── database/
-│       └── geoknowledge.sql  ← tabellerna users och results
+│       └── geoknowledge.sql  ← alla tabeller
 └── frontend/
     ├── public/data/          ← kartdata (GeoJSON)
     ├── scripts/
@@ -145,7 +172,8 @@ GeoKnowledge/
         ├── router/           ← sidornas adresser
         ├── views/            ← hela sidor (startsida, välj quiz, konturquiz)
         ├── components/       ← återanvändbara delar (karta, landsform, QuizRunner)
-        └── services/         ← hämta landdata och skapa quizfrågor
+        ├── composables/      ← useQuizSession – det som är gemensamt för alla quiz
+        └── services/         ← anrop till backenden och landdata
 ```
 
 ---
@@ -180,6 +208,8 @@ GeoKnowledge/
 | `npm run dev` | backend / frontend | startar i utvecklingsläge |
 | `npm run build` | frontend | testar att appen går att bygga |
 | `npm run fetch-data` | frontend | hämtar kartdatan på nytt från Natural Earth |
+| `npm run build-quiz-data` | frontend | bygger om backendens landdata (`backend/data/quiz-data.json`) |
+| `npm test` | backend | kör testerna |
 
 ---
 
@@ -195,3 +225,5 @@ GeoKnowledge/
 | `secretOrPrivateKey must have a value` | `JWT_SECRET` saknas i `backend/.env` |
 | Tabellerna saknas i Adminer | Kör `docker compose down -v` och sedan `docker compose up -d` |
 | Tom sida när man klickar på en länk | Adressen saknas i `frontend/src/router/index.js` |
+| "Kunde inte starta quizet. Är servern igång?" | Backenden körs inte – starta den med `npm run dev` i `backend` |
+| "Du har startat väldigt många quiz" | Över 40 quiz på 10 minuter. Vänta en stund, eller starta om backenden när du utvecklar |

@@ -1,215 +1,102 @@
 <script setup>
-import { ref, shallowRef, computed, onMounted } from 'vue'
+// GeoMaster: en resa genom världen där varje land är granne med det förra.
+// Varje land blir en fråga av slumpad typ – kontur, flagga eller huvudstad.
+// Resan skapas på servern, så att man inte kan se vägen (= alla svar) i förväg.
+import { ref, shallowRef, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { loadWorld, loadCountryDetail, loadCapitals } from '../services/countries.js'
+import { loadWorld } from '../services/countries.js'
 import { CONTINENTS } from '../services/quiz.js'
-import {
-  createJourney,
-  createGeoMasterQuestions,
-  loadNeighbors,
-  QUESTION_KINDS,
-  LIVES,
-} from '../services/geomaster.js'
-import { saveResult } from '../services/results.js'
-import { useAuthStore } from '../services/auth'
-import { startTrophyCheck, findNewTrophies } from '../services/trophies.js'
+import { useQuizSession } from '../composables/useQuizSession.js'
 import QuizRunner from '../components/QuizRunner.vue'
-import XpBar from '../components/XpBar.vue'
-import NewTrophies from '../components/NewTrophies.vue'
-import CountryShape from '../components/CountryShape.vue'
+import QuestionPrompt from '../components/QuestionPrompt.vue'
+import QuizRewards from '../components/QuizRewards.vue'
 import RouteMap from '../components/RouteMap.vue'
 
+// Frågetexten för varje frågetyp
+const QUESTION_KINDS = {
+  shape: 'Vilket land är detta?',
+  flag: 'Vilket land har den här flaggan?',
+  capital: 'Vilket land har den här huvudstaden?',
+}
+
 const route = useRoute()
-const authStore = useAuthStore()
 
-const QUIZ_TYPE = 'geomaster'
-
-// Datan som behövs. shallowRef eftersom den är stor och aldrig ändras inuti.
+// Kartdatan för resekartan. shallowRef eftersom den är stor och aldrig ändras inuti.
 const world = shallowRef(null)
-const detail = shallowRef(null)     // detaljerade konturer, laddas i bakgrunden
-const neighbors = shallowRef(null)  // { SWE: ['FIN', 'NOR'], ... }
-const capitals = shallowRef(null)   // { SWE: 'Stockholm', ... }
+const worldError = ref(null)
 
-// Världsdelen resan går genom, t.ex. 'Europe' – sparas med resultatet
-const continent = ref('World')
+// Världsdelen resan går genom, t.ex. 'Europe'
+function region() {
+  const continent = route.query.continent
+  return Object.keys(CONTINENTS).includes(continent) ? continent : 'World'
+}
 
-// Resan: länderna i ordning, och en fråga per land
-const journey = ref([])
-const questions = ref([])
+const quiz = useQuizSession('geomaster', () => ({ region: region(), timed: false }))
+const { status, error, session, result, saveStatus, xp, newTrophies, round } = quiz
 
 // De länder man svarat på hittills: [{ id: 'SWE', correct: true }, ...]
+// Servern berättar vilket land det var först när man har svarat.
 const visited = ref([])
 
-// Resultatet från QuizRunner när resan är slut, annars null
-const result = ref(null)
-
-// Ökas varje ny resa, så att QuizRunner börjar om från början
-const round = ref(0)
-
-const error = ref(null)
-
-// Samma sparstatus som i de andra quizen
-const saveStatus = ref('idle')
-const xp = ref(null)
-const newTrophies = ref([])
-let trophiesBefore = null
-
-// Id:n på alla länder i resan – kartan zoomar in på dem
-const journeyIds = computed(() => journey.value.map((country) => country.id))
-
 // Hur många fel man gjorde, och om man klarade hela resan
-const mistakes = computed(() => visited.value.filter((stop) => !stop.correct).length)
-const completed = computed(() => result.value && mistakes.value < LIVES)
-
-// Landets egenskaper (iso2 för flaggan) utifrån id
-function countryById(id) {
-  return journey.value.find((country) => country.id === id)
+function mistakes() {
+  return visited.value.filter((stop) => !stop.correct).length
 }
-
-// Landets form: den detaljerade om den hunnit laddas, annars den enkla
-function findFeature(id) {
-  const source = detail.value || world.value
-  return source.features.find((feature) => feature.properties.id === id)
-}
-
-function flagUrl(id) {
-  return `/flags/${countryById(id).iso2.toLowerCase()}.svg`
+function completed() {
+  return mistakes() < session.value.lives
 }
 
 // Startar en ny resa
 function startJourney() {
-  const queryContinent = route.query.continent
-  continent.value = Object.keys(CONTINENTS).includes(queryContinent) ? queryContinent : 'World'
-
-  journey.value = createJourney(world.value, neighbors.value, continent.value)
-  questions.value = createGeoMasterQuestions(world.value, journey.value, continent.value, capitals.value)
   visited.value = []
-  result.value = null
-  saveStatus.value = 'idle'
-  xp.value = null
-  newTrophies.value = []
-  trophiesBefore = authStore.token ? startTrophyCheck() : null
-  round.value++
+  quiz.start()
 }
 
 // QuizRunner skickar 'answered' efter varje svar – då ritas landet på kartan
-function onAnswered({ index, correct }) {
-  visited.value = [...visited.value, { id: questions.value[index].correct.id, correct }]
-}
-
-async function onFinished(quizResult) {
-  result.value = quizResult
-
-  if (!authStore.token) {
-    saveStatus.value = 'not-logged-in'
-    return
-  }
-
-  saveStatus.value = 'saving'
-  const thisRound = round.value
-
-  try {
-    const saved = await saveResult({
-      quiz_type: QUIZ_TYPE,
-      region: continent.value,
-      correct_count: quizResult.correct_count,
-      total: quizResult.total,
-      answers: quizResult.answers,
-      // Landet och frågetypen för varje fråga. Rätt svar räknas mot
-      // mästartroféerna för den typen (t.ex. en flaggfråga → flaggor).
-      country_ids: questions.value.map((question) => question.correct.id),
-      question_types: questions.value.map((question) => question.kind),
-    })
-    if (thisRound !== round.value) return
-    xp.value = saved.xp
-    saveStatus.value = 'saved'
-  } catch (e) {
-    console.error(e)
-    if (thisRound !== round.value) return
-    saveStatus.value = e.status === 401 ? 'expired' : 'error'
-    return
-  }
-
-  try {
-    const found = await findNewTrophies(trophiesBefore)
-    if (thisRound !== round.value) return
-    newTrophies.value = found
-  } catch (e) {
-    console.error(e)
-  }
+function onAnswered({ correct, correctId }) {
+  visited.value = [...visited.value, { id: correctId, correct }]
 }
 
 onMounted(async () => {
+  startJourney()
   try {
-    // Allt som behövs för frågorna laddas samtidigt
-    const [worldData, neighborData, capitalData] = await Promise.all([
-      loadWorld(),
-      loadNeighbors(),
-      loadCapitals(),
-    ])
-    world.value = worldData
-    neighbors.value = neighborData
-    capitals.value = capitalData
-    startJourney()
+    world.value = await loadWorld()
   } catch (e) {
-    error.value = e.message
-    return
-  }
-
-  try {
-    detail.value = await loadCountryDetail()
-  } catch (e) {
-    console.error(e)
+    worldError.value = e.message
   }
 })
 </script>
 
 <template>
   <section class="geomaster">
-    <p v-if="error" class="status">Något gick fel: {{ error }}</p>
-    <p v-else-if="!world || questions.length === 0" class="status">Packar väskan…</p>
+    <p v-if="status === 'error' || worldError" class="status">Något gick fel: {{ error || worldError }}</p>
+    <p v-else-if="status === 'loading' || !world" class="status">Packar väskan…</p>
 
     <template v-else>
       <header class="title">
         <h2>GeoMaster</h2>
-        <p>{{ CONTINENTS[continent] }} · {{ journey.length }} länder</p>
+        <p>{{ CONTINENTS[session.region] }} · {{ session.questions.length }} länder</p>
       </header>
 
       <!-- Kartan med resan hittills. Länder visas först när man svarat på dem. -->
       <div class="map">
-        <RouteMap :world="world" :journey-ids="journeyIds" :visited="visited" />
+        <RouteMap
+            :world="world"
+            :view="session.map_view"
+            :total="session.questions.length"
+            :visited="visited"
+        />
       </div>
 
       <!-- Slutskärm -->
-      <div v-if="result" class="finished">
-        <h3>{{ completed ? '🎉 Resan är klar!' : '💔 Slut på liv' }}</h3>
+      <div v-if="status === 'finished'" class="finished">
+        <h3>{{ completed() ? '🎉 Resan är klar!' : '💔 Slut på liv' }}</h3>
         <p class="final-score">
           {{ result.correct_count }} av {{ result.total }} rätt
-          <span v-if="!completed" class="reached">· du kom {{ visited.length }} länder</span>
+          <span v-if="!completed()" class="reached">· du kom {{ visited.length }} länder</span>
         </p>
 
-        <p v-if="saveStatus === 'saving'" class="save-status">Sparar resultatet…</p>
-        <p v-else-if="saveStatus === 'saved'" class="save-status success">✓ Resultatet är sparat</p>
-        <p v-else-if="saveStatus === 'not-logged-in'" class="save-status">
-          <RouterLink to="/login">Logga in</RouterLink> för att spara dina resultat.
-        </p>
-        <p v-else-if="saveStatus === 'expired'" class="save-status warning">
-          Din inloggning har gått ut. <RouterLink to="/login">Logga in igen</RouterLink> för att spara.
-        </p>
-        <p v-else-if="saveStatus === 'error'" class="save-status warning">
-          Resultatet kunde inte sparas just nu.
-        </p>
-
-        <XpBar
-            v-if="xp"
-            :level="xp.level"
-            :xp-into-level="xp.xpIntoLevel"
-            :xp-per-level="xp.xpPerLevel"
-            :gained="xp.gained"
-            :bonus="xp.bonus"
-            :leveled-up="xp.leveledUp"
-        />
-        <NewTrophies :trophies="newTrophies" />
+        <QuizRewards :save-status="saveStatus" :xp="xp" :new-trophies="newTrophies" />
 
         <div class="actions">
           <button class="primary" @click="startJourney">Ny resa</button>
@@ -221,24 +108,15 @@ onMounted(async () => {
       <QuizRunner
           v-else
           :key="round"
-          :questions="questions"
-          :lives="LIVES"
+          :questions="session.questions"
+          :check-answer="quiz.answer"
+          :lives="session.lives"
           @answered="onAnswered"
-          @finished="onFinished"
+          @finished="quiz.onFinished"
       >
         <template #default="{ question }">
           <h3 class="prompt">{{ QUESTION_KINDS[question.kind] }}</h3>
-
-          <div class="question-area">
-            <CountryShape v-if="question.kind === 'shape'" :feature="findFeature(question.correct.id)" />
-            <img
-                v-else-if="question.kind === 'flag'"
-                class="flag"
-                :src="flagUrl(question.correct.id)"
-                alt="Flagga för landet som ska gissas"
-            />
-            <p v-else class="capital">{{ capitals[question.correct.id] }}</p>
-          </div>
+          <QuestionPrompt :question="question" compact />
         </template>
       </QuizRunner>
     </template>
@@ -290,30 +168,6 @@ onMounted(async () => {
   font-size: 1.35rem;
 }
 
-/* Fast höjd så att knapparna inte hoppar när frågetypen byts */
-.question-area {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 12rem;
-  margin: 0.75rem 0 1.25rem;
-}
-
-.flag {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  border: 1px solid rgba(27, 77, 62, 0.2);
-  border-radius: 0.375rem;
-  box-shadow: 0 6px 16px rgba(27, 77, 62, 0.15);
-}
-
-.capital {
-  margin: 0;
-  font-size: 2.25rem;
-  font-weight: 700;
-}
-
 .finished h3 {
   margin: 0;
   font-size: 1.6rem;
@@ -359,37 +213,10 @@ onMounted(async () => {
   background: #ffffff;
 }
 
-.save-status {
-  margin: 0.75rem 0 0;
-  font-size: 0.95rem;
-}
-
-.save-status.success {
-  color: #2f9e4f;
-  font-weight: 700;
-}
-
-.save-status.warning {
-  color: #b5452f;
-}
-
-.save-status a {
-  color: inherit;
-  font-weight: 700;
-}
-
 @media (max-width: 600px) {
   .geomaster {
     width: calc(100% - 1rem);
     padding: 1.25rem 0.75rem;
-  }
-
-  .question-area {
-    height: 9rem;
-  }
-
-  .capital {
-    font-size: 1.75rem;
   }
 }
 </style>
