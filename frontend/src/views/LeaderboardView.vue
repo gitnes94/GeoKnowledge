@@ -17,6 +17,23 @@ const isLoading = ref(true)
 const errorMessage = ref('')
 const selectedKey = ref('allQuizzes')
 
+// Spelare vars profilbild inte gick att ladda – de får bokstaven i stället
+const failedPictures = ref(new Set())
+
+function pictureFailed(userId) {
+  failedPictures.value = new Set(failedPictures.value).add(userId)
+}
+
+// Visa bilden om spelaren har en och den gick att ladda
+function showPicture(row) {
+  return row.pictureUrl && !failedPictures.value.has(row.userId)
+}
+
+// Första bokstaven i namnet. [...namn] så att t.ex. Å inte delas på mitten.
+function initialOf(name) {
+  return ([...name][0] || '?').toUpperCase()
+}
+
 const activeTable = computed(() => tables.find((table) => table.key === selectedKey.value))
 const activeRows = computed(() => leaderboard.value?.[selectedKey.value] ?? [])
 
@@ -119,7 +136,18 @@ onMounted(async () => {
               :class="{ leader: row.place === 1 }"
             >
               <span class="rank" :class="getRankClass(row.place)">{{ row.place }}</span>
-              <span class="row-avatar">{{ row.username.slice(0, 1).toUpperCase() }}</span>
+              <!-- Profilbilden, eller första bokstaven om bild saknas.
+                   alt är tomt eftersom namnet står direkt bredvid. -->
+              <img
+                v-if="showPicture(row)"
+                :src="row.pictureUrl"
+                alt=""
+                class="row-avatar row-picture"
+                referrerpolicy="no-referrer"
+                loading="lazy"
+                @error="pictureFailed(row.userId)"
+              />
+              <span v-else class="row-avatar" aria-hidden="true">{{ initialOf(row.username) }}</span>
               <span class="row-name">{{ row.username }}</span>
               <span class="row-progress" aria-hidden="true">
                 <span :style="{ width: `${getProgress(row)}%` }"></span>
@@ -382,6 +410,11 @@ h1 {
   width: 2rem;
   height: 2rem;
   font-size: 0.78rem;
+}
+
+/* Profilbilden fyller den runda rutan utan att bli utdragen */
+.row-picture {
+  object-fit: cover;
 }
 
 .row-name {

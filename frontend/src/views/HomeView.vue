@@ -1,8 +1,20 @@
 <script setup>
 import { ref, computed, nextTick, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import WorldMap from '../components/WorldMap.vue'
 import CountryInfoCard from '../components/CountryInfoCard.vue'
 import { loadWorld, loadCapitals } from '../services/countries.js'
+
+const route = useRoute()
+const router = useRouter()
+
+// Profilsidan skickar hit ?konto=borttaget när kontot har tagits bort
+const accountDeleted = computed(() => route.query.konto === 'borttaget')
+
+// Stänger meddelandet och tar bort ?konto=borttaget ur adressen
+function closeDeletedNotice() {
+  router.replace({ query: {} })
+}
 
 const world = ref(null)
 
@@ -51,6 +63,11 @@ onMounted(async () => {
 </script>
 
 <template>
+  <div v-if="accountDeleted" class="notice" role="status">
+    <p>Ditt konto är borttaget, tillsammans med alla dina resultat och troféer. Välkommen tillbaka när du vill!</p>
+    <button type="button" class="notice-close" aria-label="Stäng meddelandet" @click="closeDeletedNotice">✕</button>
+  </div>
+
   <div class="home-container">
     <div class="map-wrapper">
       <WorldMap v-if="world" :world="world" :selected-id="selectedId" @select="onSelect" />
@@ -73,6 +90,43 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+
+/* Meddelandet efter att kontot har tagits bort */
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: calc(100% - 40px);
+  max-width: 550px;
+  margin: 10px auto 0;
+  padding: 0.75rem 1rem 0.75rem 1.25rem;
+  background: #ffffff;
+  border: 2px solid var(--primary-green, #1b4d3e);
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(27, 77, 62, 0.12);
+}
+
+.notice p {
+  margin: 0;
+  flex: 1;
+}
+
+.notice-close {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  font: inherit;
+  font-weight: 700;
+  color: var(--primary-green, #1b4d3e);
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.notice-close:hover {
+  background: #f0f8f1;
+}
 
 .home-container {
   display: flex;

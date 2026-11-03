@@ -1,13 +1,121 @@
 <script setup>
 
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { getResults } from '../services/results.js'
+import { updateUsername, deleteAccount } from '../services/users.js'
 import { getProgress } from '../services/progress.js'
 import XpBar from '../components/XpBar.vue'
 import { getTrophyStats, loadTrophyWorld, buildTrophies } from '../services/trophies.js'
 import { useAuthStore } from '@/services/auth'
 
 const authStore = useAuthStore()
+const router = useRouter()
+
+// ---- Byta visningsnamn ----
+
+// true när formuläret för nytt namn visas
+const editingName = ref(false)
+// Det som står i textrutan
+const nameDraft = ref('')
+// Felmeddelande från servern, t.ex. "Namnet är redan upptaget"
+const nameError = ref(null)
+// true medan namnet sparas, så att man inte kan klicka två gånger
+const savingName = ref(false)
+// Textrutan – får fokus när formuläret öppnas
+const nameInput = ref(null)
+// Knappen "Ändra namn" – får tillbaka fokus när formuläret stängs, så att
+// den som använder tangentbordet inte hamnar högst upp på sidan
+const editNameButton = ref(null)
+
+async function closeNameForm() {
+  editingName.value = false
+  await nextTick()
+  editNameButton.value?.focus()
+}
+
+async function startEditingName() {
+  nameDraft.value = authStore.user?.username || ''
+  nameError.value = null
+  editingName.value = true
+  await nextTick()
+  nameInput.value?.select()
+}
+
+function cancelEditingName() {
+  nameError.value = null
+  closeNameForm()
+}
+
+async function saveName() {
+  if (savingName.value) return
+  savingName.value = true
+  nameError.value = null
+  try {
+    // Servern kontrollerar namnet och svarar med det sparade (snyggade) namnet.
+    // setUser uppdaterar både profilen och "Inloggad som" i headern direkt.
+    const user = await updateUsername(nameDraft.value)
+    authStore.setUser(user)
+    closeNameForm()
+  } catch (e) {
+    // 400 och 409 är vanliga svar (för kort namn, upptaget) – inget att logga
+    if (e.status !== 400 && e.status !== 409) console.error(e)
+    nameError.value = e.status === 401
+      ? 'Din inloggning har gått ut. Logga in igen för att byta namn.'
+      : e.status === 400 || e.status === 409
+        ? e.message
+        : 'Namnet kunde inte sparas just nu. Försök igen.'
+  } finally {
+    savingName.value = false
+  }
+}
+
+// ---- Ta bort konto ----
+
+// true när frågan "Är du säker?" visas
+const confirmingDelete = ref(false)
+// true medan kontot tas bort, och felmeddelandet om det misslyckas
+const deleting = ref(false)
+const deleteError = ref(null)
+// Knapparna som fokus flyttas mellan när frågan öppnas och stängs
+const deleteButton = ref(null)
+const cancelDeleteButton = ref(null)
+
+// Öppnar frågan och flyttar fokus till "Avbryt" – det säkra valet, så att
+// ett oavsiktligt Enter inte tar bort kontot
+async function openDeleteConfirm() {
+  confirmingDelete.value = true
+  deleteError.value = null
+  await nextTick()
+  cancelDeleteButton.value?.focus()
+}
+
+// Stänger frågan och ger tillbaka fokus till "Ta bort konto"
+async function closeDeleteConfirm() {
+  if (deleting.value) return
+  confirmingDelete.value = false
+  deleteError.value = null
+  await nextTick()
+  deleteButton.value?.focus()
+}
+
+async function removeAccount() {
+  if (deleting.value) return
+  deleting.value = true
+  deleteError.value = null
+  try {
+    await deleteAccount()
+    // Kontot finns inte längre – logga ut och visa ett meddelande på startsidan
+    authStore.logout()
+    router.push({ path: '/', query: { konto: 'borttaget' } })
+  } catch (e) {
+    console.error(e)
+    deleteError.value = e.status === 401
+      ? 'Din inloggning har gått ut. Logga in igen för att ta bort kontot.'
+      : 'Kontot kunde inte tas bort just nu. Försök igen.'
+    deleting.value = false
+  }
+}
 
 // Första bokstaven i namnet, visas om inte användaren har något bild
 const initial = computed(() =>
@@ -143,7 +251,37 @@ onMounted(() => {
             @error="imageFailed = true"
         />
         <span v-else class="avatar avatar-initial" aria-hidden="true">{{ initial }}</span>
-        <h2 class="profile-name">{{ authStore.user?.username }}</h2>
+
+        <!-- Namnet, eller formuläret för att byta det -->
+        <form v-if="editingName" class="name-form" @submit.prevent="saveName" @keydown.esc="cancelEditingName">
+          <label for="new-name" class="visually-hidden">Nytt visningsnamn</label>
+          <input
+              id="new-name"
+              ref="nameInput"
+              v-model="nameDraft"
+              class="name-input"
+              type="text"
+              maxlength="30"
+              autocomplete="nickname"
+              :aria-invalid="nameError ? 'true' : 'false'"
+              aria-describedby="name-help"
+              :disabled="savingName"
+          />
+          <p id="name-help" class="muted name-help">2–30 tecken. Namnet syns på topplistan.</p>
+          <p v-if="nameError" class="form-error" role="alert">{{ nameError }}</p>
+          <div class="form-actions">
+            <button type="submit" class="button primary" :disabled="savingName">
+              {{ savingName ? 'Sparar…' : 'Spara' }}
+            </button>
+            <button type="button" class="button" :disabled="savingName" @click="cancelEditingName">Avbryt</button>
+          </div>
+        </form>
+        <template v-else>
+          <h2 class="profile-name">{{ authStore.user?.username }}</h2>
+          <button v-if="authStore.isLoggedIn" ref="editNameButton" type="button" class="link-button" @click="startEditingName">
+            ✏️ Ändra namn
+          </button>
+        </template>
       </div>
       <!-- XP och nivå -->
         <XpBar v-if="progress"
@@ -210,6 +348,43 @@ onMounted(() => {
           <span>Sida {{ currentPage }} av {{ totalPages }}</span>
           <button type="button" class="button" :disabled="currentPage >= totalPages" @click="nextPage">Nästa</button>
         </div>
+
+      <!-- Ta bort konto – längst ner, och man måste bekräfta först -->
+      <div v-if="authStore.isLoggedIn" class="danger-zone">
+        <button
+            v-if="!confirmingDelete"
+            ref="deleteButton"
+            type="button"
+            class="button danger"
+            @click="openDeleteConfirm"
+        >
+          Ta bort konto
+        </button>
+
+        <div
+            v-else
+            class="confirm-delete"
+            role="alertdialog"
+            aria-labelledby="confirm-title"
+            aria-describedby="confirm-text"
+            @keydown.esc="closeDeleteConfirm"
+        >
+          <h3 id="confirm-title">Vill du ta bort ditt konto?</h3>
+          <p id="confirm-text">
+            Alla dina resultat, din XP och dina troféer tas bort och går inte att få tillbaka.
+            Du kan logga in med Google igen senare, men börjar då om från noll.
+          </p>
+          <p v-if="deleteError" class="form-error" role="alert">{{ deleteError }}</p>
+          <div class="form-actions">
+            <button type="button" class="button danger filled" :disabled="deleting" @click="removeAccount">
+              {{ deleting ? 'Tar bort…' : 'Ja, ta bort mitt konto' }}
+            </button>
+            <button ref="cancelDeleteButton" type="button" class="button" :disabled="deleting" @click="closeDeleteConfirm">
+              Avbryt
+            </button>
+          </div>
+        </div>
+      </div>
     </section>
 </template>
 
@@ -391,5 +566,133 @@ onMounted(() => {
   margin: 0;
   font-size: 1.75rem;
   color: var(--primary-green, #1b4d3e);
+}
+
+/* Knappen "Ändra namn" under namnet – ser ut som en länk */
+.link-button {
+  padding: 0.25rem 0.5rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary-green, #1b4d3e);
+  background: none;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.link-button:hover {
+  background: #f0f8f1;
+}
+
+/* Formuläret för nytt namn */
+.name-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  max-width: 22rem;
+}
+
+.name-input {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--primary-green, #1b4d3e);
+  border: 3px solid var(--primary-green, #1b4d3e);
+  border-radius: 999px;
+}
+
+.name-input:focus-visible {
+  outline: 3px solid #41ac5a;
+  outline-offset: 2px;
+}
+
+.name-input[aria-invalid='true'] {
+  border-color: var(--color-wrong, #c62828);
+}
+
+.name-help {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+}
+
+.form-error {
+  margin: 0.25rem 0 0;
+  color: var(--color-wrong, #c62828);
+  font-weight: 700;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Spara: fylld grön, som "Spela igen" på quizsidorna */
+.button.primary {
+  color: #ffffff;
+  background: var(--primary-green, #1b4d3e);
+}
+
+.button.primary:hover:not(:disabled) {
+  background: #24614f;
+}
+
+/* Ta bort konto: längst ner, avskild från resten */
+.danger-zone {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px dashed rgba(27, 77, 62, 0.2);
+}
+
+.button.danger {
+  color: var(--color-wrong, #c62828);
+  border-color: var(--color-wrong, #c62828);
+}
+
+.button.danger:hover:not(:disabled) {
+  background: #fdecea;
+}
+
+.button.danger.filled {
+  color: #ffffff;
+  background: var(--color-wrong, #c62828);
+}
+
+.button.danger.filled:hover:not(:disabled) {
+  background: #a51f1f;
+}
+
+.confirm-delete {
+  padding: 1.25rem;
+  border: 2px solid var(--color-wrong, #c62828);
+  border-radius: 1.25rem;
+  background: #fff6f5;
+}
+
+.profile .confirm-delete h3 {
+  color: var(--color-wrong, #c62828);
+}
+
+.confirm-delete p {
+  margin: 0 0 0.5rem;
+}
+
+/* Text som bara skärmläsare läser upp */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 </style>

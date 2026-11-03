@@ -46,8 +46,9 @@ const loginWithGoogle = () => {
           <!-- Vilka uppgifter vi sparar om den som loggar in -->
           <p class="privacy">
             När du loggar in sparar vi din e-postadress, ditt namn och din profilbild från Google,
-            och dina quizresultat. Ditt namn syns på topplistan. Uppgifterna används bara i det här
-            skolprojektet och raderas när kursen är slut.
+            och dina quizresultat. Ditt namn och din profilbild syns på topplistan. Uppgifterna används
+            bara i det här skolprojektet och raderas när kursen är slut.
+            På profilsidan kan du byta namn och ta bort ditt konto med alla dina uppgifter.
           </p>
         </div>
     </div>

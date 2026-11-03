@@ -168,6 +168,10 @@ router.post('/start', optionalAuth, startLimiter, async (req, res) => {
                 JSON.stringify(questions), session.started_at]
         );
     } catch (err) {
+        // Kontot har tagits bort (t.ex. på en annan enhet) men token gäller fortfarande
+        if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+            return res.status(401).json({ error: 'Unauthorized', message: 'Kontot finns inte längre. Logga ut och in igen.' });
+        }
         console.error('Kunde inte skapa quiz:', err);
         return res.status(500).json({ error: 'Internal Server Error', message: 'Kunde inte starta quizet.' });
     }
