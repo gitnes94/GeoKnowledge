@@ -78,8 +78,11 @@ export function useQuizSession(quizType, getOptions, { useHistory = false } = {}
       console.error(e)
       if (thisRound !== round.value) return
       status.value = 'error'
-      // 429 = för många quiz på kort tid. Serverns meddelande förklarar det.
-      error.value = e.status === 429 ? e.message : 'Kunde inte starta quizet. Är servern igång?'
+      // 429 = för många quiz på kort tid, 401 = kontot finns inte längre.
+      // Då förklarar serverns meddelande vad som hänt.
+      error.value = e.status === 429 || e.status === 401
+        ? e.message
+        : 'Kunde inte starta quizet. Är servern igång?'
     }
   }
 
