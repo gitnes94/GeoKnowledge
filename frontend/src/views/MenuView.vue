@@ -58,7 +58,7 @@ h2 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.375rem;
+  gap: 1rem;
 }
 
 .menu-card {
@@ -66,7 +66,11 @@ h2 {
   flex-direction: column;
   align-items: center;
   gap: 0.375rem;
+  /* Alla kort lika breda, oavsett hur lång beskrivningen är.
+     Utan width blir varje kort bara så brett som sin text. */
+  width: 100%;
   max-width: 21rem;
+  box-sizing: border-box;
   margin: 0 auto;
   padding: 1.25rem 1rem;
   color: var(--primary-green, #1b4d3e);
