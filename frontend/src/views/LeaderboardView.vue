@@ -34,9 +34,10 @@ const isAccuracy = computed(() => activeTable.value.kind === 'accuracy')
 // andel rätt (bestäms i backenden, leaderboard.js)
 const minAnswers = computed(() => leaderboard.value?.minAnswers ?? 0)
 
-// Prispallen: alla med placering 1–3, grupperade per placering. Delar två
-// spelare en placering står de på samma pall (t.ex. två på tredjeplatsen),
-// så att ingen med samma resultat hamnar i listan under.
+// Prispallen: alla med placering 1–3, grupperade per placering. Backenden
+// avgör lika resultat (den som kom dit först vinner), så det står i praktiken
+// en spelare per pall – men skulle två ändå dela en placering hamnar de på
+// samma pall i stället för att en av dem trillar ner i listan.
 //   [{ place: 1, rows: [...] }, { place: 3, rows: [..., ...] }]
 const podiumGroups = computed(() => {
   const groups = []
@@ -193,6 +194,7 @@ onMounted(async () => {
           <p v-if="isAccuracy && minAnswers" class="requirement">
             Svara på minst {{ minAnswers }} frågor för att komma med på listan.
           </p>
+          <p class="tiebreak">Vid lika resultat vinner den som kom dit först.</p>
         </header>
 
         <p v-if="activeRows.length === 0" class="empty-message">
@@ -483,6 +485,11 @@ h1 {
 .panel-heading .requirement {
   margin-top: 0.25rem;
   font-weight: 650;
+}
+
+.panel-heading .tiebreak {
+  margin-top: 0.15rem;
+  font-size: 0.8rem;
 }
 
 /* ---- Prispallen ---- */
