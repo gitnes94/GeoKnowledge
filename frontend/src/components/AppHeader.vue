@@ -9,7 +9,6 @@ const authStore = useAuthStore()
 // Blir true en kort stund efter utloggning, så att meddelandet syns
 const showLoggedOut = ref(false)
 
-console.log("Kollar authStore.user:", authStore.user)
 // Loggar ut, skickar användaren till startsidan och visar ett kort meddelande
 function logout() {
   authStore.logout()
