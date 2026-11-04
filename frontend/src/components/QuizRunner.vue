@@ -238,9 +238,9 @@ onUnmounted(stopTimer)
 
       <p v-if="answerError" class="answer-error" role="alert">{{ answerError }}</p>
 
-      <button v-if="isAnswered"
-              class="btn btn-primary next"
-              :disabled="isFinished"
+      <!-- Syns hela tiden, men är grå tills man har svarat -->
+      <button class="btn btn-primary next"
+              :disabled="!isAnswered || isFinished"
               @click="nextQuestion">
         {{ outOfLives || currentIndex === questions.length - 1 ? 'Se resultat' : 'Nästa' }}
       </button>
