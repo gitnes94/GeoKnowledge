@@ -76,6 +76,16 @@ body {
   box-shadow: var(--shadow-panel);
 }
 
+/* Statusmeddelanden inuti sidpaneler */
+.page .status {
+  margin: 0.5rem 0 0;
+}
+
+.page .status a {
+  color: inherit;
+  font-weight: 700;
+}
+
 /* Kort – vit ruta med grön kant */
 .card {
   padding: 1.25rem 1rem;

@@ -119,7 +119,7 @@ async function removeAccount() {
 
 // Första bokstaven i namnet, visas om inte användaren har något bild
 const initial = computed(() =>
-    [...(authStore.user?.username || '?')][0].toUpperCase())
+  [...(authStore.user?.username || '?')][0].toUpperCase())
 
 // Blir true om profilbilden inte gick att ladda, då visas bokstaven i stället
 const imageFailed = ref(false)
@@ -154,20 +154,20 @@ const nextTrophy = computed(() => {
 })
 
 const quizMap = {
-    flag: 'Flaggquiz',
-    shape: 'Konturquiz',
-    capital: 'Huvudstadsquiz',
-    geomaster: 'GeoMaster'
+  flag: 'Flaggquiz',
+  shape: 'Konturquiz',
+  capital: 'Huvudstadsquiz',
+  geomaster: 'GeoMaster'
 }
 
 const regionMap = {
-    World: 'Hela världen',
-    Europe: 'Europa',
-    Asia: 'Asien',
-    Africa: 'Afrika',
-    'North America': 'Nordamerika',
-    'South America': 'Sydamerika',
-    Oceania: 'Oceanien'
+  World: 'Hela världen',
+  Europe: 'Europa',
+  Asia: 'Asien',
+  Africa: 'Afrika',
+  'North America': 'Nordamerika',
+  'South America': 'Sydamerika',
+  Oceania: 'Oceanien'
 }
 
 const currentPage = ref(1)
@@ -175,9 +175,9 @@ const itemsPerPage = ref(6)
 
 // Statistik och bläddring räknas ut från result och uppdateras automatiskt
 const totalCorrect = computed(() =>
-    result.value.reduce((accumulator, currentItem) => accumulator + currentItem.correct_count, 0))
+  result.value.reduce((accumulator, currentItem) => accumulator + currentItem.correct_count, 0))
 const totalAnswers = computed(() =>
-    result.value.reduce((accumulator, currentItem) => accumulator + currentItem.total, 0))
+  result.value.reduce((accumulator, currentItem) => accumulator + currentItem.total, 0))
 // Andel rätt i procent (0 om man inte har spelat något än)
 const percentCorrect = computed(() =>
   totalAnswers.value > 0 ? Math.round((totalCorrect.value / totalAnswers.value) * 100) : 0)
@@ -216,32 +216,41 @@ async function loadTrophies() {
 // Varje del hämtas för sig och visas så fort dess data har kommit.
 // De långsamma troféerna gör alltså inte att historiken och XP:n väntar.
 onMounted(() => {
+  // Om personen inte är inloggad så hämtas ingen data i onödan
+  if (!authStore.isLoggedIn) return
   getResults()
-      .then((data) => { result.value = data })
-      .catch((error) => {
-        resultsError.value = true
-        console.error('Failed to load results:', error)
-      })
-      .finally(() => { resultsLoading.value = false })
+    .then((data) => { result.value = data })
+    .catch((error) => {
+      resultsError.value = true
+      console.error('Failed to load results:', error)
+    })
+    .finally(() => { resultsLoading.value = false })
 
   getProgress()
-      .then((data) => { progress.value = data })
-      .catch((error) => {
-        progressError.value = true
-        console.error('Failed to load progress:', error)
-      })
+    .then((data) => { progress.value = data })
+    .catch((error) => {
+      progressError.value = true
+      console.error('Failed to load progress:', error)
+    })
 
   loadTrophies()
-      .then((data) => { trophies.value = data })
-      .catch((error) => {
-        trophiesError.value = true
-        console.error('Failed to load trophies:', error)
-      })
+    .then((data) => { trophies.value = data })
+    .catch((error) => {
+      trophiesError.value = true
+      console.error('Failed to load trophies:', error)
+    })
 })
 </script>
 
 <template>
   <section class="page profile">
+    <template v-if="!authStore.token">
+      <h2>Profil</h2>
+      <p class="status">
+        <RouterLink to="/login">Logga in</RouterLink> för att se din profil.
+      </p>
+    </template>
+    <template v-else>
       <div class="profile-header">
         <img
             v-if="authStore.user?.picture_url && !imageFailed"
@@ -279,7 +288,8 @@ onMounted(() => {
         </form>
         <template v-else>
           <h2 class="profile-name">{{ authStore.user?.username }}</h2>
-          <button v-if="authStore.isLoggedIn" ref="editNameButton" type="button" class="link-button" @click="startEditingName">
+          <button v-if="authStore.isLoggedIn" ref="editNameButton" type="button" class="link-button"
+            @click="startEditingName">
             ✏️ Ändra namn
           </button>
         </template>
@@ -296,12 +306,12 @@ onMounted(() => {
       <!-- Nästa trofé att låsa upp -->
       <div class="boxes">
         <div class="card box">
-        <h3>Nästa trofé</h3>
-        <template v-if="nextTrophy">
-          <p class="trophy-name">
-            <span aria-hidden="true">{{ nextTrophy.icon }}</span> {{ nextTrophy.name }}
-          </p>
-          <p class="muted">{{ nextTrophy.description }}</p>
+          <h3>Nästa trofé</h3>
+          <template v-if="nextTrophy">
+            <p class="trophy-name">
+              <span aria-hidden="true">{{ nextTrophy.icon }}</span> {{ nextTrophy.name }}
+            </p>
+            <p class="muted">{{ nextTrophy.description }}</p>
 
           <div
               class="track"
@@ -311,14 +321,14 @@ onMounted(() => {
               :aria-valuemax="nextTrophy.progress.total"
               :aria-label="`${nextTrophy.name}: ${nextTrophy.progress.current} av ${nextTrophy.progress.total}`"
           >
-            <div class="fill" :style="{ width: Math.round(progressShare(nextTrophy) * 100) + '%' }"></div>
-          </div>
+              <div class="fill" :style="{ width: Math.round(progressShare(nextTrophy) * 100) + '%' }"></div>
+            </div>
 
-        </template>
+          </template>
           <p v-else-if="trophiesError" class="muted">Kunde inte hämta troféerna just nu.</p>
           <p v-else-if="trophies">Du har låst upp alla troféer du kan sikta på! 🎉</p>
           <RouterLink to="/menu/trophies" class="btn">Visa mina troféer</RouterLink>
-      </div>
+        </div>
 
         <!-- Statistik -->
         <div class="card box">
@@ -335,20 +345,23 @@ onMounted(() => {
       <p v-else-if="resultsError" class="muted">Kunde inte hämta dina resultat just nu.</p>
       <p v-else-if="result.length === 0" class="muted">Du har inte spelat något quiz än.</p>
       <ul v-else class="history">
-          <li v-for="item in paginatedResult" :key="item.id">
-            <span class="muted">{{ new Date(item.created_at).toLocaleString('sv-SE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) }}</span>
-            <span>
-              {{ quizMap[item.quiz_type] || 'Okänt' }} · {{ regionMap[item.region] || 'Okänt' }}
-              <span v-if="item.timed" title="Spelat på tid">⏱</span>
-            </span>
-            <strong>{{ item.correct_count }}/{{ item.total }}</strong>
-          </li>
-        </ul>
-        <div v-if="totalPages > 1" class="pagination-controls">
-          <button type="button" class="btn" :disabled="currentPage === 1" @click="prevPage">Föregående</button>
-          <span>Sida {{ currentPage }} av {{ totalPages }}</span>
-          <button type="button" class="btn" :disabled="currentPage >= totalPages" @click="nextPage">Nästa</button>
-        </div>
+        <li v-for="item in paginatedResult" :key="item.id">
+          <span class="muted">{{ new Date(item.created_at).toLocaleString('sv-SE', {
+            day: 'numeric', month: 'short',
+            hour:
+              '2-digit', minute: '2-digit' }) }}</span>
+          <span>
+            {{ quizMap[item.quiz_type] || 'Okänt' }} · {{ regionMap[item.region] || 'Okänt' }}
+            <span v-if="item.timed" title="Spelat på tid">⏱</span>
+          </span>
+          <strong>{{ item.correct_count }}/{{ item.total }}</strong>
+        </li>
+      </ul>
+      <div v-if="totalPages > 1" class="pagination-controls">
+        <button type="button" class="btn" :disabled="currentPage === 1" @click="prevPage">Föregående</button>
+        <span>Sida {{ currentPage }} av {{ totalPages }}</span>
+        <button type="button" class="btn" :disabled="currentPage >= totalPages" @click="nextPage">Nästa</button>
+      </div>
 
       <!-- Ta bort konto – längst ner, och man måste bekräfta först -->
       <div v-if="authStore.isLoggedIn" class="danger-zone">
@@ -386,14 +399,19 @@ onMounted(() => {
           </div>
         </div>
       </div>
-    </section>
+    </template>
+  </section>
 </template>
 
 <style scoped>
-
 /* Panelen kommer från .page i style.css – här bara centreringen */
 .profile {
   text-align: center;
+}
+
+.profile h2 {
+  margin: 0;
+  font-size: 1.75rem;
 }
 
 /* Rubrikerna inuti kortet: Nästa trofé, Statistik och Senaste quiz */
