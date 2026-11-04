@@ -156,7 +156,8 @@ const nextTrophy = computed(() => {
 const quizMap = {
     flag: 'Flaggquiz',
     shape: 'Konturquiz',
-    capital: 'Huvudstadsquiz'
+    capital: 'Huvudstadsquiz',
+    geomaster: 'GeoMaster'
 }
 
 const regionMap = {

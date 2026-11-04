@@ -72,8 +72,10 @@ router.get('/google/callback',
         // Generate JWT for the session
         const token = createToken(req.user);
 
-        // Send token back to the Vue frontend
-        res.redirect(`${FRONTEND_URL}/auth/success?token=${token}`);
+        // Skicka token till frontenden i fragmentet (#), inte som ?token=.
+        // Allt efter # stannar i webbläsaren: det skickas aldrig till någon
+        // server och hamnar därför inte i serverloggar eller i Referer-headern.
+        res.redirect(`${FRONTEND_URL}/auth/success#token=${encodeURIComponent(token)}`);
     }
 );
 // Route för att hämta användare från databasen och spara i res

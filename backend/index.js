@@ -13,6 +13,7 @@ const leaderboardRoutes = require('./leaderboard');
 const trophiesRoutes = require('./trophies');
 const quizRoutes = require('./quiz/routes');
 const { requireAuth } = require('./jwt');
+const { allowedOrigins } = require('./corsOrigins');
 
 const app = express()
 
@@ -20,9 +21,12 @@ const app = express()
 // vilket Google-inloggningen behöver för att bygga callback-adressen.
 app.set('trust proxy', 1)
 
+// API:t tar bara emot JSON. Formulärdata (express.urlencoded) läses inte,
+// eftersom inget i appen använder det – då kan inte ett formulär på en annan
+// webbplats skicka anrop som servern bryr sig om (se CORS ovan).
 app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
-app.use(cors())
+// Bara frontenden får läsa API:ts svar i en webbläsare (se corsOrigins.js)
+app.use(cors({ origin: allowedOrigins(process.env.FRONTEND_URL) }))
 app.use('/api/auth', authRoutes)
 app.use('/api/users', usersRoutes)
 app.use('/api/results', requireAuth, resultsRoutes)
