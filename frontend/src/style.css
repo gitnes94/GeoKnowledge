@@ -112,6 +112,11 @@ button.card:disabled {
   box-shadow: var(--ring-selected);
 }
 
+/* Ett valt kort behåller sin gröna bakgrund även när man hovrar över det */
+button.card.selected:hover:not(:disabled) {
+  background: var(--selected-bg);
+}
+
 /* Rund knapp – vit med grön kant */
 .btn {
   padding: 0.5rem 1.25rem;
