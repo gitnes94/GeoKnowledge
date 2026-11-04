@@ -16,13 +16,27 @@ const { requireAuth } = require('./jwt');
 
 const app = express()
 
+// CORS: bara frontenden får anropa API:t från en webbläsare. Anrop från
+// andra webbplatser stoppas av webbläsaren. Samma adress som auth.js
+// skickar tillbaka användaren till efter inloggningen.
+function allowedOrigins() {
+    const frontend = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '')
+    // Lokalt svarar Vite på både localhost och 127.0.0.1 – godta båda
+    const local = frontend.match(/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/)
+    if (local) {
+        const port = local[2] || ''
+        return [`http://localhost${port}`, `http://127.0.0.1${port}`]
+    }
+    return [frontend]
+}
+
 // Render skickar trafiken via en proxy. Då räknas https som rätt protokoll,
 // vilket Google-inloggningen behöver för att bygga callback-adressen.
 app.set('trust proxy', 1)
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use(cors())
+app.use(cors({ origin: allowedOrigins() }))
 app.use('/api/auth', authRoutes)
 app.use('/api/users', usersRoutes)
 app.use('/api/results', requireAuth, resultsRoutes)
