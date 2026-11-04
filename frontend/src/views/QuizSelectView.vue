@@ -212,4 +212,28 @@ h2 {
   margin-top: 1rem;
   padding: 0.75rem 2rem;
 }
+
+
+/* Mobil: ikonen till vänster och texten till höger, så att korten blir lägre.
+   Ligger sist så att den vinner över .type-card ovanför. */
+@media (max-width: 520px) {
+  .type-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 0.75rem;
+    row-gap: 0.125rem;
+    align-items: center;
+    text-align: left;
+    padding: 0.75rem 1rem;
+  }
+
+  .icon {
+    grid-row: span 2;
+  }
+
+  .badge {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
 </style>

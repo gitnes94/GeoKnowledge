@@ -168,14 +168,35 @@ button.nav-button {
 /* Desktop*/
 @media screen and (min-width: 1024px)  {
   .app-header{
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 25px;
-  justify-content: center;
-  align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 25px;
+    justify-content: center;
+    align-items: center;
   }
   .main-nav {
     margin-bottom: 0;
+  }
+}
+
+/* Mobil: luft på sidorna, mindre knappar och mindre logga så att inget sticker ut */
+@media (max-width: 600px) {
+  .main-nav {
+    gap: 0.5rem;
+    padding: 0 1rem;
+  }
+
+  .nav-button {
+    padding: 8px 12px;
+    font-size: 1rem;
+  }
+
+  .logo-container {
+    font-size: large;
+  }
+
+  img {
+    height: 44px;
   }
 }
 

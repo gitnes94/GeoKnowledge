@@ -99,12 +99,6 @@ h2 {
   gap: 1rem;
 }
 
-@media (max-width: 520px) {
-  .types {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* Utseende, hover och "vald" kommer från .card i style.css – här bara innehållets layout */
 .type-card {
   display: flex;

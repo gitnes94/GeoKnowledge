@@ -145,3 +145,11 @@ button.card:disabled {
   background: var(--primary-green);
   opacity: 0.9;
 }
+
+/* Mobil: panelen tar nästan hela bredden och har mindre luft inuti */
+@media (max-width: 520px) {
+  .page {
+    width: calc(100% - 1rem);
+    padding: 1.5rem 1rem;
+  }
+}
