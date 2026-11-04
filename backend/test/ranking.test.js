@@ -121,3 +121,16 @@ test('värden som text (som från mysql2) fungerar', () => {
     const { lists } = buildRankings(results, users, OPTIONS);
     assert.equal(lists.xp[0].xp, 92);
 });
+
+test('resultat för en spelare som saknas (t.ex. just borttagen) räknas inte', () => {
+    // Spelare 2 har bäst resultat men finns inte bland användarna
+    const users = new Map([[1, { username: 'Kvar', picture_url: null }]]);
+    const results = [
+        { id: 1, user_id: 2, quiz_type: 'flag', correct_count: 10, total: 10, bonus_xp: 0 },
+        { id: 2, user_id: 1, quiz_type: 'flag', correct_count: 5, total: 10, bonus_xp: 0 },
+    ];
+    const { lists, placementOf } = buildRankings(results, users, OPTIONS);
+    assert.deepEqual(lists.xp.map((r) => [r.place, r.username]), [[1, 'Kvar']]);
+    assert.deepEqual(placementOf(1).xp, { place: 1, score: 50 });
+    assert.ok(lists.xp.every((r) => typeof r.username === 'string'));
+});

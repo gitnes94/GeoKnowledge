@@ -16,7 +16,8 @@ const failed = ref(false)
 watch(() => props.pictureUrl, () => { failed.value = false })
 
 // Första bokstaven. [...namn] så att t.ex. Å inte delas på mitten.
-const initial = computed(() => ([...props.name][0] || '?').toUpperCase())
+// (props.name || '') så att komponenten aldrig kraschar om namnet saknas.
+const initial = computed(() => ([...(props.name || '')][0] || '?').toUpperCase())
 </script>
 
 <template>

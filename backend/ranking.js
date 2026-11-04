@@ -53,7 +53,8 @@ function compareScore(kind, a, b) {
 // Går igenom alla resultat i den ordning de sparades och räknar ut, för varje
 // lista och spelare: slutresultatet och när det resultatet nåddes första gången.
 //   results – [{ id, user_id, quiz_type, correct_count, total, bonus_xp }, ...]
-//   users   – Map: id → { username, picture_url }
+//   users   – Map: id → { username, picture_url }. Resultat för spelare som
+//             inte finns i den här listan räknas inte.
 function buildRankings(results, users, { minAnswers, xpPerCorrect }) {
     const sorted = [...results].sort((a, b) => Number(a.id) - Number(b.id));
 
@@ -96,6 +97,9 @@ function buildRankings(results, users, { minAnswers, xpPerCorrect }) {
     for (const [list, { kind }] of Object.entries(LISTS)) {
         const entries = [];
         for (const [userId, state] of states[list]) {
+            // Spelare som saknas (t.ex. borttagna) kommer inte med – listorna,
+            // placeringarna och platsnumren bygger då på samma spelare
+            if (!users.has(userId)) continue;
             if (kind === 'accuracy' && state.total < minAnswers) continue;
             entries.push({ userId, state, reachedAt: state.firstReached.get(scoreKey(kind, state)) });
         }
@@ -106,7 +110,7 @@ function buildRankings(results, users, { minAnswers, xpPerCorrect }) {
     // En rad som den skickas till frontenden – samma fält som förut
     function toRow(list, entry, index) {
         const { kind } = LISTS[list];
-        const user = users.get(entry.userId) ?? {};
+        const user = users.get(entry.userId);
         const row = {
             place: index + 1,
             userId: entry.userId,

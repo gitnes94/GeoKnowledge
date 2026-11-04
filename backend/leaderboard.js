@@ -14,13 +14,20 @@ const MIN_ANSWERS = 30;
 // Själva rankningen – bäst först, och vid lika den som nådde resultatet först –
 // görs i ranking.js. Där behöver resultaten gås igenom i den ordning de
 // sparades, därför hämtas de här i stället för att summeras i SQL.
+//
+// Resultaten och spelarnas namn hämtas i EN fråga (JOIN). Med två separata
+// frågor kunde ett konto tas bort mellan dem, och då fanns resultat vars
+// spelare saknades – sidan kraschade på ett namn som var undefined.
 async function getRankings() {
-    const [[results], [users]] = await Promise.all([
-        pool.query('SELECT id, user_id, quiz_type, correct_count, total, bonus_xp FROM results ORDER BY id'),
-        pool.query('SELECT id, username, picture_url FROM users WHERE id IN (SELECT DISTINCT user_id FROM results)'),
-    ]);
-    const usersById = new Map(users.map((user) => [Number(user.id), user]));
-    return buildRankings(results, usersById, { minAnswers: MIN_ANSWERS, xpPerCorrect: XP_PER_CORRECT });
+    const [rows] = await pool.query(
+        `SELECT r.id, r.user_id, r.quiz_type, r.correct_count, r.total, r.bonus_xp,
+                u.username, u.picture_url
+         FROM results r
+         JOIN users u ON u.id = r.user_id
+         ORDER BY r.id`
+    );
+    const usersById = new Map(rows.map((row) => [Number(row.user_id), row]));
+    return buildRankings(rows, usersById, { minAnswers: MIN_ANSWERS, xpPerCorrect: XP_PER_CORRECT });
 }
 
 // Siffrorna i den gröna rubrikrutan: hur många som spelar, hur många frågor
