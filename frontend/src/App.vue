@@ -5,9 +5,9 @@ import AppHeader from './components/AppHeader.vue'
 
 <template>
   <AppHeader />
-  
-
-  <router-view />
+  <main>
+    <router-view />
+  </main>
 </template>
 
 <style scoped></style>
