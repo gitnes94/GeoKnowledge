@@ -137,7 +137,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="leaderboard-ex3">
+  <section class="leaderboard-ex3">
     <header class="hero">
       <div class="hero-copy">
         <h1>Topplistor</h1>
@@ -176,11 +176,12 @@ onMounted(async () => {
     <template v-else>
       <nav class="category-tabs" aria-label="Välj topplista">
         <button
-          v-for="table in tables"
-          :key="table.key"
-          type="button"
-          :aria-pressed="selectedKey === table.key"
-          :class="{ active: selectedKey === table.key }"
+            v-for="table in tables"
+            :key="table.key"
+            type="button"
+            class="btn"
+            :aria-pressed="selectedKey === table.key"
+            :class="{ 'btn-primary': selectedKey === table.key }"
           @click="selectedKey = table.key"
         >
           {{ table.title }}
@@ -286,14 +287,14 @@ onMounted(async () => {
             >
               <span :style="{ width: `${(myStatus.answered / minAnswers) * 100}%` }"></span>
             </span>
-            <RouterLink to="/quiz" class="my-link">Spela ett quiz →</RouterLink>
+            <RouterLink to="/quiz" class="btn my-link">Spela ett quiz →</RouterLink>
           </template>
           <p v-else-if="myStatus.kind === 'place'">
             Du ligger på <strong>plats {{ myStatus.place }}</strong> med <strong>{{ myStatus.score }}</strong>.
           </p>
           <template v-else>
             <p>Du har inte spelat något quiz än.</p>
-            <RouterLink to="/quiz" class="my-link">Spela ditt första quiz →</RouterLink>
+            <RouterLink to="/quiz" class="btn my-link">Spela ditt första quiz →</RouterLink>
           </template>
         </div>
 
@@ -302,17 +303,19 @@ onMounted(async () => {
         </p>
       </section>
     </template>
-  </main>
+    </section>
 </template>
 
 <style scoped>
 .leaderboard-ex3 {
-  --forest: var(--primary-green, #1b4d3e);
-  --muted: #526359;
+  /* Korta namn för den här sidan – färgerna kommer från style.css */
+  --forest: var(--primary-green);
+  --muted: var(--text-muted);
   /* Orange som combo-räknaren i quizet – markerar "du" */
-  --you: #f08c00;
-  --you-bg: #fff4e0;
-  width: min(100% - 2rem, 68rem);
+  --you: var(--orange);
+  --you-bg: var(--orange-bg);
+  /* Samma bredd som Troféer */
+  width: min(100% - 2rem, 60rem);
   margin: 1.5rem auto 3rem;
   color: var(--forest);
 }
@@ -325,26 +328,23 @@ onMounted(async () => {
   align-items: center;
   gap: 1.5rem 2rem;
   padding: clamp(1.4rem, 4vw, 2.5rem);
-  border-radius: 1.6rem;
-  background:
-    radial-gradient(ellipse at 82% 30%, rgba(119, 165, 127, 0.3), transparent 38%),
-    linear-gradient(120deg, #163f33, #24634b);
-  color: #fff;
-  box-shadow: 0 18px 38px rgba(27, 77, 62, 0.18);
+  border-radius: var(--radius-panel);
+  background: var(--card-bg);
+  box-shadow: var(--shadow-panel);
 }
 
+/* Samma storlek som rubrikerna på de andra sidorna */
 h1 {
   margin: 0;
-  font-size: clamp(2.2rem, 5vw, 3.5rem);
-  font-weight: 650;
-  letter-spacing: -0.065em;
-  line-height: 0.98;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .hero-copy > p {
   max-width: 27rem;
   margin: 0.8rem 0 0;
-  color: #d3e3d6;
+  color: var(--text-muted);
   font-size: 0.98rem;
   line-height: 1.6;
 }
@@ -360,13 +360,13 @@ h1 {
 
 .stat {
   padding: 0.75rem 0.9rem;
-  border: 1px solid rgba(226, 238, 227, 0.18);
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--hover-bg);
 }
 
 .stat dt {
-  color: #c5ddc8;
+  color: var(--text-muted);
   font-size: 0.68rem;
   font-weight: 750;
   letter-spacing: 0.1em;
@@ -400,13 +400,13 @@ h1 {
 
 .week-count {
   display: block;
-  color: #c5ddc8;
+  color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 600;
 }
 
 .stat dd.week-empty {
-  color: #d3e3d6;
+  color: var(--text-muted);
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -417,42 +417,21 @@ h1 {
 .category-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  justify-content: center;
+  gap: 0.5rem;
   margin: 1.25rem 0 1rem;
-  padding: 0.35rem;
-  border: 1px solid rgba(27, 77, 62, 0.08);
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.78);
 }
 
-.category-tabs button {
-  flex: 0 0 auto;
-  padding: 0.7rem 1rem;
-  border: 0;
-  border-radius: 0.7rem;
-  background: transparent;
-  color: #60766b;
-  cursor: pointer;
-  font: inherit;
+/* Utseendet kommer från .btn och .btn-primary (vald flik) i style.css */
+.category-tabs .btn {
+  padding: 0.5rem 1rem;
   font-size: 0.86rem;
-  font-weight: 650;
-  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.category-tabs button:hover {
-  background: #f0f6f1;
-}
-
-.category-tabs button.active {
-  background: var(--forest);
-  color: #fff;
-  box-shadow: 0 3px 8px rgba(27, 77, 62, 0.18);
-}
-
-.category-tabs button:focus-visible,
+.category-tabs .btn:focus-visible,
 .my-link:focus-visible,
 .guest-hint a:focus-visible {
-  outline: 3px solid #78b795;
+  outline: 3px solid var(--green-bright);
   outline-offset: 3px;
 }
 
@@ -460,10 +439,9 @@ h1 {
 
 .leaderboard-panel {
   padding: clamp(1.1rem, 4vw, 2rem);
-  border: 1px solid rgba(27, 77, 62, 0.08);
-  border-radius: 1.6rem;
-  background: #fff;
-  box-shadow: 0 18px 50px rgba(27, 77, 62, 0.1);
+  border-radius: var(--radius-panel);
+  background: var(--card-bg);
+  box-shadow: var(--shadow-panel);
 }
 
 .panel-heading {
@@ -554,7 +532,7 @@ h1 {
 }
 
 .podium-avatar {
-  border: 3px solid #fff;
+  border: 3px solid var(--white);
   box-shadow: 0 6px 16px rgba(27, 77, 62, 0.18);
 }
 
@@ -584,14 +562,14 @@ h1 {
   width: 100%;
   margin-top: 0.35rem;
   border-radius: 0.9rem 0.9rem 0.35rem 0.35rem;
-  color: #fff;
+  color: var(--white);
   font-size: 1.4rem;
   font-weight: 750;
 }
 
 .first .podium-block {
   height: 6rem;
-  background: linear-gradient(180deg, #2c7a55, #1b4d3e);
+  background: linear-gradient(180deg, #2c7a55, var(--primary-green));
   font-size: 1.8rem;
 }
 
@@ -682,7 +660,7 @@ h1 {
 }
 
 .you {
-  color: #a65d00;
+  color: var(--orange-dark);
   font-weight: 750;
 }
 
@@ -690,15 +668,15 @@ h1 {
   display: block;
   height: 0.25rem;
   overflow: hidden;
-  border-radius: 999px;
-  background: #edf2ed;
+  border-radius: var(--radius-pill);
+  background: var(--track-bg);
 }
 
 .row-progress span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #84b98b, #347b55);
+  background: var(--green-bright);
 }
 
 .row-score {
@@ -718,7 +696,7 @@ h1 {
   margin-top: 1.25rem;
   padding: 0.9rem 1.1rem;
   border: 2px solid var(--you);
-  border-radius: 1rem;
+  border-radius: var(--radius-card);
   background: var(--you-bg);
 }
 
@@ -734,7 +712,7 @@ h1 {
   order: 3;
   height: 0.5rem;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #ffe2b3;
 }
 
@@ -745,20 +723,11 @@ h1 {
   background: var(--you);
 }
 
+/* Utseendet kommer från .btn i style.css – här bara en mindre storlek */
 .my-link {
   padding: 0.45rem 0.9rem;
-  border: 2px solid var(--forest);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--forest);
   font-size: 0.86rem;
-  font-weight: 700;
-  text-decoration: none;
   white-space: nowrap;
-}
-
-.my-link:hover {
-  background: #f0f8f1;
 }
 
 .guest-hint {
@@ -784,12 +753,12 @@ h1 {
 }
 
 .state-message {
-  border-radius: 0.9rem;
-  background: #fff;
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
 }
 
 .error-message {
-  color: #9e2929;
+  color: var(--color-wrong);
 }
 
 /* Text som bara skärmläsare läser upp */
@@ -832,7 +801,7 @@ h1 {
 
 @media (max-width: 480px) {
   .leaderboard-ex3 {
-    width: min(100% - 1.25rem, 68rem);
+    width: min(100% - 1.25rem, 60rem);
     margin-top: 0.75rem;
   }
 
@@ -848,8 +817,8 @@ h1 {
     font-size: 1.35rem;
   }
 
-  .category-tabs button {
-    padding: 0.6rem 0.75rem;
+  .category-tabs .btn {
+    padding: 0.4rem 0.75rem;
   }
 
   .podium-name {
@@ -862,7 +831,7 @@ h1 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .category-tabs button {
+  .category-tabs .btn {
     transition: none;
   }
 }

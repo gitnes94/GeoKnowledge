@@ -64,10 +64,10 @@ const loginWithGoogle = () => {
 }
 
 .login-card {
-  background: var(--card-bg, #ffffff);
+  background: var(--card-bg);
   padding: 2rem 1.5rem;
-  border-radius: 1.75rem;
-  box-shadow: 0 10px 25px rgba(27, 77, 62, 0.12);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-panel);
   text-align: center;
   width: 100%;
   max-width: 26rem;

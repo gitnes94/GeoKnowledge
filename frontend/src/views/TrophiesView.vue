@@ -57,7 +57,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="trophies-view">
+  <section class="page trophies-view">
     <h2>Troféer</h2>
 
     <p v-if="!authStore.token" class="status">
@@ -178,8 +178,8 @@ onMounted(async () => {
 .master td {
   padding: 0.5rem 0.75rem;
   vertical-align: middle;
-  background: #ffffff;
-  border: 2px solid rgba(27, 77, 62, 0.15);
+  background: var(--card-bg);
+  border: 2px solid var(--line);
   border-radius: 0.875rem;
 }
 
@@ -193,8 +193,8 @@ onMounted(async () => {
 }
 
 .master td.unlocked {
-  background: #fff8e6;
-  border-color: #f0b400;
+  background: var(--gold-bg);
+  border-color: var(--gold);
 }
 
 .master td .done {
@@ -235,15 +235,10 @@ onMounted(async () => {
 }
 
 /* ---------- Korten ---------- */
+/* Panelen kommer från .page i style.css – den här sidan är bredare */
 .trophies-view {
   max-width: 60rem;
-  width: calc(100% - 2rem);
-  margin: 1.5rem auto;
-  padding: 2rem 1.5rem;
   text-align: center;
-  background: var(--card-bg, #ffffff);
-  border-radius: 1.75rem;
-  box-shadow: 0 10px 25px rgba(27, 77, 62, 0.12);
 }
 
 h2 {
@@ -286,14 +281,14 @@ h3 {
   align-items: center;
   gap: 0.25rem;
   padding: 1rem 0.75rem;
-  background: #fff8e6;
-  border: 3px solid #f0b400;
-  border-radius: 1.25rem;
+  background: var(--gold-bg);
+  border: 3px solid var(--gold);
+  border-radius: var(--radius-card);
 }
 
 /* Låsta troféer: grå ikon och tonad ram */
 .trophy.locked {
-  background: #ffffff;
+  background: var(--card-bg);
   border-color: rgba(27, 77, 62, 0.2);
 }
 
@@ -341,16 +336,16 @@ h3 {
 .track {
   flex: 1;
   height: 0.5rem;
-  border-radius: 999px;
-  background: #e3f1e6;
+  border-radius: var(--radius-pill);
+  background: var(--track-bg);
   overflow: hidden;
 }
 
 .fill {
   display: block;
   height: 100%;
-  background: #41ac5a;
-  border-radius: 999px;
+  background: var(--green-bright);
+  border-radius: var(--radius-pill);
 }
 
 .numbers {

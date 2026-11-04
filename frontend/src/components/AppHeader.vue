@@ -67,11 +67,15 @@ function logout() {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Knewave&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
+/* Alla avstånd i headern styrs av gap här – inga marginaler på delarna */
 .app-header {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 0.75rem;
+  padding-top: 1rem;
 }
+
 .logo-container {
   display: flex;
   align-items: center;
@@ -82,6 +86,11 @@ function logout() {
   font-style: normal;
   font-size: x-large;
   text-shadow: 1px 1px 0px rgba(182, 241, 171, 0.5);
+}
+
+/* h1 har en stor standardmarginal från webbläsaren – den tar vi bort */
+.logo-container h1 {
+  margin: 0;
 }
 
 img {
@@ -96,7 +105,6 @@ img {
 .main-nav {
   display: flex;
   gap: 15px;
-  margin-bottom: 20px;
   width: 100%;
   max-width: 600px;
   justify-content: center;
@@ -112,18 +120,18 @@ img {
   max-width: 250px;
   min-width: min-content;
   white-space: nowrap;
-  background-color: var(--card-bg, #ffffff);
-  color: var(--primary-green, #1B4D3E); 
-  border: 3px solid var(--primary-green, #1B4D3E);
-  border-radius: 50px; 
+  background-color: var(--card-bg);
+  color: var(--primary-green);
+  border: var(--border);
+  border-radius: var(--radius-pill);
   text-decoration: none;
   font-weight: bold;
   font-size: 1.1rem;
-  box-shadow: 0 4px 10px rgba(27, 77, 62, 0.12);
+  box-shadow: var(--shadow-card);
   transition: all 0.2s ease;
 }
 .nav-button:hover {
-  background-color: #f0f8f1; 
+  background-color: var(--hover-bg);
   transform: translateY(-2px); 
   box-shadow: 0 6px 14px rgba(27, 77, 62, 0.2);
 }.nav-button:active {
@@ -136,15 +144,14 @@ img {
 button.nav-button {
   font-family: inherit;
   cursor: pointer;
-}.user-info-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 
+/* "Inloggad som …" – en liten rad under menyn */
 .user-name {
   align-self: center;
   white-space: nowrap;
+  font-size: 0.9rem;
+  opacity: 0.8;
 }
 
 /* Kort meddelande efter utloggning. Ligger fast högst upp i fönstret,
@@ -157,24 +164,48 @@ button.nav-button {
   z-index: 10;
   margin: 0;
   padding: 0.75rem 1.5rem;
-  background: var(--primary-green, #1b4d3e);
-  color: #ffffff;
+  background: var(--primary-green);
+  color: var(--white);
   font-weight: bold;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   box-shadow: 0 6px 16px rgba(27, 77, 62, 0.25);
 }
 
-/* Desktop*/
+/* Desktop: logga och meny på en rad, "Inloggad som …" på en egen rad under */
 @media screen and (min-width: 1024px)  {
-  .app-header{
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 25px;
-  justify-content: center;
-  align-items: center;
+  .app-header {
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: 25px;
+    row-gap: 0.25rem;
+    justify-content: center;
+    align-items: center;
   }
+
+  .user-name {
+    flex-basis: 100%;
+    text-align: center;
+  }
+}
+
+/* Mobil: luft på sidorna, mindre knappar och mindre logga så att inget sticker ut */
+@media (max-width: 600px) {
   .main-nav {
-    margin-bottom: 0;
+    gap: 0.5rem;
+    padding: 0 1rem;
+  }
+
+  .nav-button {
+    padding: 8px 12px;
+    font-size: 1rem;
+  }
+
+  .logo-container {
+    font-size: large;
+  }
+
+  img {
+    height: 44px;
   }
 }
 

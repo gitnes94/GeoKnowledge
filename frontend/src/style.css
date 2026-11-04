@@ -1,33 +1,56 @@
 /* Globala stilar – gäller hela appen.
    Alla färger samlas här som variabler så de kan ändras på ett ställe. */
 :root {
-  --color-background: #0b1020;
+  /* Grundfärger */
+  --bg-color: linear-gradient( 359.8deg,  rgb(246, 247, 228) 2.2%, rgb(188, 235, 180) 99.3% );
+  --primary-green: #1B4D3E;
+  --card-bg: #FFFFFF;
+  --text-muted: #526359;
+
+  /* Gröna nyanser */
+  --green-bright: #41ac5a;     /* fyllnad, t.ex. progressbar */
+  --green-selected: #2f9e4f;   /* kant på valt kort/knapp */
+  --hover-bg: #f0f8f1;         /* bakgrund vid hover */
+  --selected-bg: #d6f5dc;      /* bakgrund på valt kort/knapp */
+  --track-bg: #e3f1e6;         /* tom del av progressbar */
+
+  /* Troféer och XP */
+  --gold: #f0b400;
+  --gold-bg: #fff8e6;
+  --orange: #f08c00;
+  --orange-dark: #a65d00;
+
+  /* Feedback i quizet: rätt och fel svar */
+  --color-correct: #25813f;
+  --color-wrong: #c62828;
+
+  /* Kartorna (WorldMap, CountryShape) */
   --color-ocean: #111a2e;
   --color-graticule: #b6b9c0;
   --color-country: #2b3a55;
   --color-country-hover: #4a6a9c;
   --color-border: #0b1020;
-  --color-surface: #1a2440;
-  --color-text: #e2e8f0;
-  --color-text-muted: #94a3b8;
   --color-accent: #38bdf8;
   --color-ocean-border: transparent;
 
-/* Färger för HomeView bakgrund och kort */
-  --bg-color: linear-gradient( 359.8deg,  rgb(246, 247, 228) 2.2%, rgb(188, 235, 180) 99.3% );
-  --primary-green: #1B4D3E;
-  --card-bg: #FFFFFF;
-  --ocean-blue: #2E86C1;
-  --map-green: #A9DFBF;
-
-  /* Feedback i quizet: rätt och fel svar */
-  --color-correct: #25813f;
-  --color-wrong: #c62828;
-  
+  /* Form */
+  --radius-panel: 1.75rem;
+  --radius-card: 1.25rem;
+  --radius-pill: 999px;
+  --border: 3px solid var(--primary-green);
+  --shadow-panel: 0 10px 25px rgba(27, 77, 62, 0.12);
+  --shadow-card: 0 4px 10px rgba(27, 77, 62, 0.12);
 
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
   color: var(--primary-green);
   background: var(--bg-color);
+
+  /* Övrigt */
+  --white: #ffffff;                 /* text på grön/orange bakgrund */
+  --orange-bg: #fff4e0;             /* combo-räknaren */
+  --color-warning: #b5452f;         /* varningstext, t.ex. "kunde inte spara" */
+  --line: rgba(27, 77, 62, 0.15);   /* tunna kanter */
+  --ring-selected: 0 0 0 4px rgba(65, 172, 90, 0.3);  /* ring runt valt kort */
 }
 
 /* Bredd och höjd inkluderar padding – gör layout mycket enklare */
@@ -40,4 +63,99 @@ body {
   margin: 0;
   min-height: 100vh;
   background-attachment: fixed;
+}
+
+/* Vit panel runt en sidas innehåll (som Meny, Välj quiz, Profil) */
+.page {
+  max-width: 44rem;
+  width: calc(100% - 2rem);
+  margin: 1.5rem auto;
+  padding: 2rem 1.5rem;
+  background: var(--card-bg);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-panel);
+}
+
+/* Kort – vit ruta med grön kant */
+.card {
+  padding: 1.25rem 1rem;
+  font: inherit;
+  color: var(--primary-green);
+  background: var(--card-bg);
+  border: var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+/* Klickbara kort (knappar och länkar) */
+a.card,
+button.card {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+a.card:hover,
+button.card:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: var(--hover-bg);
+}
+
+button.card:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.card.selected {
+  background: var(--selected-bg);
+  border-color: var(--green-selected);
+  box-shadow: var(--ring-selected);
+}
+
+/* Ett valt kort behåller sin gröna bakgrund även när man hovrar över det */
+button.card.selected:hover:not(:disabled) {
+  background: var(--selected-bg);
+}
+
+/* Rund knapp – vit med grön kant */
+.btn {
+  padding: 0.5rem 1.25rem;
+  font: inherit;
+  font-weight: 700;
+  color: var(--primary-green);
+  background: var(--card-bg);
+  border: var(--border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--hover-bg);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Huvudknapp – grön med vit text */
+.btn-primary {
+  color: var(--white);
+  background: var(--primary-green);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-green);
+  opacity: 0.9;
+}
+
+/* Mobil: panelen tar nästan hela bredden och har mindre luft inuti */
+@media (max-width: 520px) {
+  .page {
+    width: calc(100% - 1rem);
+    margin: 0.75rem auto;
+    padding: 1.5rem 1rem;
+  }
 }

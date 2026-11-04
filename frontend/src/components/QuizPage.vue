@@ -45,7 +45,7 @@ onMounted(quiz.start)
 </script>
 
 <template>
-  <section class="quiz-page">
+  <section class="page quiz-page">
     <p v-if="status === 'error'" class="status">Något gick fel: {{ error }}</p>
 
     <p v-else-if="status === 'loading'" class="status">Laddar quiz…</p>
@@ -60,8 +60,8 @@ onMounted(quiz.start)
       <QuizRewards :save-status="saveStatus" :xp="xp" :new-trophies="newTrophies" />
 
       <div class="actions">
-        <button class="primary" @click="quiz.start">Spela igen</button>
-        <RouterLink to="/quiz" class="secondary">Välj ett annat quiz</RouterLink>
+        <button class="btn btn-primary" @click="quiz.start">Spela igen</button>
+        <RouterLink to="/quiz" class="btn">Välj ett annat quiz</RouterLink>
       </div>
     </div>
 
@@ -89,20 +89,14 @@ onMounted(quiz.start)
 </template>
 
 <style scoped>
+/* Panelen kommer från .page i style.css – här bara centreringen */
 .quiz-page {
   /* CountryShape färgar landet med de här variablerna. Vi skriver över dem
      bara inuti quizet, så att landet blir grönt som på startsidans karta. */
-  --color-country: #41ac5a;
-  --color-accent: var(--primary-green, #1b4d3e);
+  --color-country: var(--green-bright);
+  --color-accent: var(--primary-green);
 
-  max-width: 44rem;
-  margin: 1.5rem auto;
-  padding: 2rem 1.5rem;
-  width: calc(100% - 2rem);
   text-align: center;
-  background: var(--card-bg, #ffffff);
-  border-radius: 1.75rem;
-  box-shadow: 0 10px 25px rgba(27, 77, 62, 0.12);
 }
 
 h2 {
@@ -128,25 +122,9 @@ h2 {
   margin-top: 1.5rem;
 }
 
-.primary,
-.secondary {
+/* Knapparna på slutskärmen är lite större än en vanlig .btn */
+.actions .btn {
   padding: 0.75rem 1.75rem;
-  font: inherit;
-  font-weight: 700;
-  border: 3px solid var(--primary-green, #1b4d3e);
-  border-radius: 999px;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.primary {
-  color: #ffffff;
-  background: var(--primary-green, #1b4d3e);
-}
-
-.secondary {
-  color: var(--primary-green, #1b4d3e);
-  background: #ffffff;
 }
 
 /* Visar på slutskärmen att quizet spelades på tid */
@@ -154,10 +132,17 @@ h2 {
   display: inline-block;
   margin: 0.25rem 0 0;
   padding: 0.25rem 0.875rem;
-  border-radius: 999px;
-  background: var(--primary-green, #1b4d3e);
-  color: #ffffff;
+  border-radius: var(--radius-pill);
+  background: var(--primary-green);
+  color: var(--white);
   font-size: 0.875rem;
   font-weight: 700;
+}
+
+/* Mobil: mindre rubrik, så att den får plats på en rad */
+@media (max-width: 520px) {
+  h2 {
+    font-size: 1.3rem;
+  }
 }
 </style>

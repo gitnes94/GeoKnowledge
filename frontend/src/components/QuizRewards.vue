@@ -52,12 +52,12 @@ defineProps({
 }
 
 .save-status.success {
-  color: #2f9e4f;
+  color: var(--green-selected);
   font-weight: 700;
 }
 
 .save-status.warning {
-  color: #b5452f;
+  color: var(--color-warning);
 }
 
 .save-status a {

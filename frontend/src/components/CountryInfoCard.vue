@@ -64,9 +64,9 @@ const flagUrl = computed(() =>
   width: calc(100% - 40px);
   max-width: 420px;
   text-align: center;
-  background: var(--card-bg, #ffffff);
+  background: var(--card-bg);
   border-radius: 24px;
-  box-shadow: 0 10px 25px rgba(27, 77, 62, 0.12);
+  box-shadow: var(--shadow-panel);
   animation: appear 0.25s ease-out;
 }
 
@@ -89,7 +89,7 @@ const flagUrl = computed(() =>
   height: 2rem;
   font-size: 1.5rem;
   line-height: 1;
-  color: var(--primary-green, #1b4d3e);
+  color: var(--primary-green);
   background: none;
   border: none;
   border-radius: 50%;
@@ -97,13 +97,13 @@ const flagUrl = computed(() =>
 }
 
 .close:hover {
-  background: #f0f8f1;
+  background: var(--hover-bg);
 }
 
 .flag {
   width: 9rem;
   max-width: 60%;
-  border: 1px solid rgba(27, 77, 62, 0.2);
+  border: 1px solid var(--line);
   border-radius: 0.375rem;
   box-shadow: 0 6px 16px rgba(27, 77, 62, 0.15);
 }

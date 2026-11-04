@@ -59,11 +59,11 @@ function startQuiz() {
 </script>
 
 <template>
-    <section class="continent-select">
+    <section class="page continent-select">
         <h2>Välj världsdel</h2>
 
         <div class="types">
-            <button v-for="continent in continentList" :key="continent.id" class="type-card"
+          <button v-for="continent in continentList" :key="continent.id" class="card type-card"
                 :class="{ selected: continent.id === selectedId }" @click="selectContinent(continent)">
                 <span class="icon" aria-hidden="true">{{ continent.icon }}</span>
                 <span class="name">{{ continent.name }}</span>
@@ -75,68 +75,45 @@ function startQuiz() {
             <template v-else>Klicka på en region för att välja den.</template>
         </p>
 
-        <button class="start" :disabled="!selectedContinent" @click="startQuiz">
+      <button class="btn btn-primary start" :disabled="!selectedContinent" @click="startQuiz">
             Starta quiz
         </button>
     </section>
 </template>
 
 <style scoped>
+/* Panelen kommer från .page i style.css – här bara centreringen */
 .continent-select {
-  max-width: 44rem;
-  margin: 1.5rem auto;
-  padding: 2rem 1.5rem;
-  width: calc(100% - 2rem);
   text-align: center;
-  background: var(--card-bg, #ffffff);
-  border-radius: 1.75rem;
-  box-shadow: 0 10px 25px rgba(27, 77, 62, 0.12);
 }
 
 h2 {
   margin: 0.5rem 0 1.5rem;
   font-size: 1.75rem;
-  color: var(--primary-green, #1b4d3e);
 }
 
+/* Korten bredvid varandra, under varandra på smala skärmar */
+/* minmax(0, 1fr): kolumnerna får aldrig bli bredare än panelen */
 .types {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
 }
 
-@media (max-width: 520px) {
+/* Riktigt smala skärmar: ett kort per rad, så att långa namn får plats */
+@media (max-width: 360px) {
   .types {
     grid-template-columns: 1fr;
   }
 }
 
+/* Utseende, hover och "vald" kommer från .card i style.css – här bara innehållets layout */
 .type-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 1.25rem 1rem;
-  font: inherit;
-  color: var(--primary-green, #1b4d3e);
-  background: #ffffff;
-  border: 3px solid var(--primary-green, #1b4d3e);
-  border-radius: 1.25rem;
-  box-shadow: 0 4px 10px rgba(27, 77, 62, 0.12);
-  cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
-}
-
-.type-card:hover {
-  transform: translateY(-2px);
-  background: #f0f8f1;
-}
-
-.type-card.selected {
-  background: #d6f5dc;
-  border-color: #2f9e4f;
-  box-shadow: 0 0 0 4px rgba(65, 172, 90, 0.3);
 }
 
 .icon {
@@ -150,24 +127,11 @@ h2 {
 
 .chosen {
   margin: 1.5rem 0 0;
-  color: var(--primary-green, #1b4d3e);
 }
 
+/* Startknappen är lite större än en vanlig .btn */
 .start {
   margin-top: 1rem;
   padding: 0.75rem 2rem;
-  font: inherit;
-  font-weight: 700;
-  color: #ffffff;
-  background: var(--primary-green, #1b4d3e);
-  border: 3px solid var(--primary-green, #1b4d3e);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-
-.start:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 </style>

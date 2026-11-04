@@ -88,11 +88,11 @@ onMounted(async () => {
     padding: 3rem 1rem;
 }
 .spinner {
-    border: 4px solid rgba(27, 77, 62, 0.15);
+    border: 4px solid var(--line);
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    border-left-color: var(--primary-green, #1b4d3e);
+    border-left-color: var(--primary-green);
     animation: spin 1s linear infinite;
     margin-bottom: 1rem;
 }

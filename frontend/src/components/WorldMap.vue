@@ -101,6 +101,10 @@ const countries = computed(() => {
   stroke-width: 2;
 }
 
+.country:focus {
+  outline: none;
+}
+
 .ocean {
   fill: var(--color-ocean);
   stroke: var(--color-ocean-border);

@@ -241,7 +241,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <section class="profile">
+  <section class="page profile">
       <div class="profile-header">
         <img
             v-if="authStore.user?.picture_url && !imageFailed"
@@ -271,10 +271,10 @@ onMounted(() => {
           <p id="name-help" class="muted name-help">2–30 tecken. Namnet syns på topplistan.</p>
           <p v-if="nameError" class="form-error" role="alert">{{ nameError }}</p>
           <div class="form-actions">
-            <button type="submit" class="button primary" :disabled="savingName">
+            <button type="submit" class="btn btn-primary" :disabled="savingName">
               {{ savingName ? 'Sparar…' : 'Spara' }}
             </button>
-            <button type="button" class="button" :disabled="savingName" @click="cancelEditingName">Avbryt</button>
+            <button type="button" class="btn" :disabled="savingName" @click="cancelEditingName">Avbryt</button>
           </div>
         </form>
         <template v-else>
@@ -295,7 +295,7 @@ onMounted(() => {
 
       <!-- Nästa trofé att låsa upp -->
       <div class="boxes">
-        <div class="box">
+        <div class="card box">
         <h3>Nästa trofé</h3>
         <template v-if="nextTrophy">
           <p class="trophy-name">
@@ -317,15 +317,15 @@ onMounted(() => {
         </template>
           <p v-else-if="trophiesError" class="muted">Kunde inte hämta troféerna just nu.</p>
           <p v-else-if="trophies">Du har låst upp alla troféer du kan sikta på! 🎉</p>
-        <RouterLink to="/menu/trophies" class="button">Visa mina troféer</RouterLink>
+          <RouterLink to="/menu/trophies" class="btn">Visa mina troféer</RouterLink>
       </div>
 
         <!-- Statistik -->
-        <div class="box">
+        <div class="card box">
           <h3>Statistik</h3>
           <p class="big-number">{{ percentText }}</p>
           <p v-if="!resultsLoading && !resultsError" class="muted">{{ totalCorrect }} av {{ totalAnswers }} rätt</p>
-          <RouterLink to="/menu/leaderboard" class="button">Visa topplistan</RouterLink>
+          <RouterLink to="/menu/leaderboard" class="btn">Visa topplistan</RouterLink>
         </div>
       </div>
 
@@ -345,9 +345,9 @@ onMounted(() => {
           </li>
         </ul>
         <div v-if="totalPages > 1" class="pagination-controls">
-          <button type="button" class="button" :disabled="currentPage === 1" @click="prevPage">Föregående</button>
+          <button type="button" class="btn" :disabled="currentPage === 1" @click="prevPage">Föregående</button>
           <span>Sida {{ currentPage }} av {{ totalPages }}</span>
-          <button type="button" class="button" :disabled="currentPage >= totalPages" @click="nextPage">Nästa</button>
+          <button type="button" class="btn" :disabled="currentPage >= totalPages" @click="nextPage">Nästa</button>
         </div>
 
       <!-- Ta bort konto – längst ner, och man måste bekräfta först -->
@@ -356,7 +356,7 @@ onMounted(() => {
             v-if="!confirmingDelete"
             ref="deleteButton"
             type="button"
-            class="button danger"
+            class="btn danger"
             @click="openDeleteConfirm"
         >
           Ta bort konto
@@ -377,10 +377,10 @@ onMounted(() => {
           </p>
           <p v-if="deleteError" class="form-error" role="alert">{{ deleteError }}</p>
           <div class="form-actions">
-            <button type="button" class="button danger filled" :disabled="deleting" @click="removeAccount">
+            <button type="button" class="btn danger filled" :disabled="deleting" @click="removeAccount">
               {{ deleting ? 'Tar bort…' : 'Ja, ta bort mitt konto' }}
             </button>
-            <button ref="cancelDeleteButton" type="button" class="button" :disabled="deleting" @click="closeDeleteConfirm">
+            <button ref="cancelDeleteButton" type="button" class="btn" :disabled="deleting" @click="closeDeleteConfirm">
               Avbryt
             </button>
           </div>
@@ -391,23 +391,16 @@ onMounted(() => {
 
 <style scoped>
 
-/* Hela profilen är ett stort kort – samma mått och stil som Meny och Troféer */
+/* Panelen kommer från .page i style.css – här bara centreringen */
 .profile {
-  max-width: 44rem;
-  width: calc(100% - 2rem);
-  margin: 1.5rem auto;
-  padding: 2rem 1.5rem;
   text-align: center;
-  background: var(--card-bg, #ffffff);
-  border-radius: 1.75rem;
-  box-shadow: 0 10px 25px rgba(27, 77, 62, 0.12);
 }
 
 /* Rubrikerna inuti kortet: Nästa trofé, Statistik och Senaste quiz */
 .profile h3 {
   margin: 0 0 0.75rem;
   font-size: 1.2rem;
-  color: var(--primary-green, #1b4d3e);
+  color: var(--primary-green);
 }
 
 /* Nästa trofé: namnet med ikon */
@@ -421,18 +414,17 @@ onMounted(() => {
 .track {
   height: 0.875rem;
   margin: 0.5rem 0 0.25rem;
-  border-radius: 999px;
-  background: #e3f1e6;
-  border: 2px solid var(--primary-green, #1b4d3e);
+  border-radius: var(--radius-pill);
+  background: var(--track-bg);
+  border: 2px solid var(--primary-green);
   overflow: hidden;
 }
 
 .fill {
   height: 100%;
-  border-radius: 999px;
-  background: #41ac5a;
+  border-radius: var(--radius-pill);
+  background: var(--green-bright);
 }
-
 
 /* De två rutorna bredvid varandra – under varandra på smala skärmar */
 .boxes {
@@ -448,21 +440,12 @@ onMounted(() => {
   }
 }
 
-.box {
-  display: flex;
-  flex-direction: column;
-  padding: 1.25rem 1rem;
-  border: 3px solid var(--primary-green, #1b4d3e);
-  border-radius: 1.25rem;
-  box-shadow: 0 4px 10px rgba(27, 77, 62, 0.12);
+.big-number {
+  margin: 0;
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--primary-green);
 }
-
-/* Knappen längst ner i rutan, så att knapparna i båda rutorna hamnar på samma höjd */
-.box .button {
-  margin-top: auto;
-  align-self: center;
-}
-
 
 /* Dämpad text, t.ex. datum och beskrivningar */
 .muted {
@@ -475,7 +458,7 @@ onMounted(() => {
   margin: 0;
   font-size: 2.25rem;
   font-weight: 700;
-  color: var(--primary-green, #1b4d3e);
+  color: var(--primary-green);
 }
 
 /* Historiken: en rad per quiz, med en tunn linje emellan */
@@ -508,30 +491,14 @@ onMounted(() => {
   margin-top: 1rem;
 }
 
-/* Knappar och länken till troféerna – samma stil som knapparna på quizsidorna */
-.button {
+/* Utseendet kommer från .btn i style.css – här bara avstånd och lyft */
+.btn {
   display: inline-block;
   margin-top: 0.75rem;
-  padding: 0.5rem 1.25rem;
-  font: inherit;
-  font-weight: 700;
-  color: var(--primary-green, #1b4d3e);
-  background: #ffffff;
-  border: 3px solid var(--primary-green, #1b4d3e);
-  border-radius: 999px;
-  text-decoration: none;
-  cursor: pointer;
 }
 
-.button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* Hover: samma effekt som korten och knapparna i resten av appen */
-.button:hover:not(:disabled) {
+.btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  background: #f0f8f1;
 }
 
 /* Överst på profilsidan: bild och namn som sidans rubrik, centrerat */
@@ -557,8 +524,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--primary-green, #1b4d3e);
-  color: #ffffff;
+  background: var(--primary-green);
+  color: var(--white);
   font-size: 1.75rem;
   font-weight: 700;
 }
@@ -566,7 +533,7 @@ onMounted(() => {
 .profile-name {
   margin: 0;
   font-size: 1.75rem;
-  color: var(--primary-green, #1b4d3e);
+  color: var(--primary-green);
 }
 
 /* Knappen "Ändra namn" under namnet – ser ut som en länk */
@@ -575,7 +542,7 @@ onMounted(() => {
   font: inherit;
   font-size: 0.9rem;
   font-weight: 700;
-  color: var(--primary-green, #1b4d3e);
+  color: var(--primary-green);
   background: none;
   border: none;
   border-radius: 0.5rem;
@@ -585,7 +552,7 @@ onMounted(() => {
 }
 
 .link-button:hover {
-  background: #f0f8f1;
+  background: var(--hover-bg);
 }
 
 /* Formuläret för nytt namn */
@@ -605,18 +572,18 @@ onMounted(() => {
   font-size: 1.25rem;
   font-weight: 700;
   text-align: center;
-  color: var(--primary-green, #1b4d3e);
-  border: 3px solid var(--primary-green, #1b4d3e);
-  border-radius: 999px;
+  color: var(--primary-green);
+  border: var(--border);
+  border-radius: var(--radius-pill);
 }
 
 .name-input:focus-visible {
-  outline: 3px solid #41ac5a;
+  outline: 3px solid var(--green-bright);
   outline-offset: 2px;
 }
 
 .name-input[aria-invalid='true'] {
-  border-color: var(--color-wrong, #c62828);
+  border-color: var(--color-wrong);
 }
 
 .name-help {
@@ -626,7 +593,7 @@ onMounted(() => {
 
 .form-error {
   margin: 0.25rem 0 0;
-  color: var(--color-wrong, #c62828);
+  color: var(--color-wrong);
   font-weight: 700;
 }
 
@@ -637,16 +604,6 @@ onMounted(() => {
   gap: 0.5rem;
 }
 
-/* Spara: fylld grön, som "Spela igen" på quizsidorna */
-.button.primary {
-  color: #ffffff;
-  background: var(--primary-green, #1b4d3e);
-}
-
-.button.primary:hover:not(:disabled) {
-  background: #24614f;
-}
-
 /* Ta bort konto: längst ner, avskild från resten */
 .danger-zone {
   margin-top: 2.5rem;
@@ -654,33 +611,33 @@ onMounted(() => {
   border-top: 2px dashed rgba(27, 77, 62, 0.2);
 }
 
-.button.danger {
-  color: var(--color-wrong, #c62828);
-  border-color: var(--color-wrong, #c62828);
+.btn.danger {
+  color: var(--color-wrong);
+  border-color: var(--color-wrong);
 }
 
-.button.danger:hover:not(:disabled) {
+.btn.danger:hover:not(:disabled) {
   background: #fdecea;
 }
 
-.button.danger.filled {
-  color: #ffffff;
-  background: var(--color-wrong, #c62828);
+.btn.danger.filled {
+  color: var(--white);
+  background: var(--color-wrong);
 }
 
-.button.danger.filled:hover:not(:disabled) {
+.btn.danger.filled:hover:not(:disabled) {
   background: #a51f1f;
 }
 
 .confirm-delete {
   padding: 1.25rem;
-  border: 2px solid var(--color-wrong, #c62828);
-  border-radius: 1.25rem;
+  border: 2px solid var(--color-wrong);
+  border-radius: var(--radius-card);
   background: #fff6f5;
 }
 
 .profile .confirm-delete h3 {
-  color: var(--color-wrong, #c62828);
+  color: var(--color-wrong);
 }
 
 .confirm-delete p {

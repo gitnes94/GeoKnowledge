@@ -34,9 +34,9 @@ defineProps({
   margin: 1.25rem auto 0;
   padding: 1rem 1.25rem;
   text-align: left;
-  background: #fff8e6;
-  border: 3px solid #f0b400;
-  border-radius: 1.25rem;
+  background: var(--gold-bg);
+  border: 3px solid var(--gold);
+  border-radius: var(--radius-card);
   animation: pop 0.5s ease-out;
 }
 

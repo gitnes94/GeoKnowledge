@@ -49,7 +49,7 @@ defineProps({
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  border: 1px solid rgba(27, 77, 62, 0.2);
+  border: 1px solid var(--line);
   border-radius: 0.375rem;
   box-shadow: 0 6px 16px rgba(27, 77, 62, 0.15);
 }
@@ -59,7 +59,7 @@ defineProps({
   margin: 0;
   font-size: 2.5rem;
   font-weight: 700;
-  color: var(--primary-green, #1b4d3e);
+  color: var(--primary-green);
   overflow-wrap: break-word;
 }
 
@@ -75,5 +75,17 @@ defineProps({
   .compact .capital {
     font-size: 1.75rem;
   }
+}
+
+/* Mobil: lägre fråga i de vanliga quizen, så att svarsknapparna och Nästa får plats.
+   :not(.compact) – GeoMaster har redan sin egen storlek ovanför. */
+@media (max-width: 520px) {
+  .question-prompt:not(.compact) {
+    margin: 0.75rem 0 1rem;
+  }
+
+  .question-prompt.kind-shape:not(.compact) { height: 10rem; }
+  .question-prompt.kind-flag:not(.compact) { height: 9rem; }
+  .question-prompt.kind-capital:not(.compact) { height: 6rem; }
 }
 </style>

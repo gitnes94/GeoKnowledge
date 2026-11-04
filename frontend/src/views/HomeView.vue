@@ -100,10 +100,10 @@ onMounted(async () => {
   max-width: 550px;
   margin: 10px auto 0;
   padding: 0.75rem 1rem 0.75rem 1.25rem;
-  background: #ffffff;
-  border: 2px solid var(--primary-green, #1b4d3e);
+  background: var(--card-bg);
+  border: 2px solid var(--primary-green);
   border-radius: 1rem;
-  box-shadow: 0 10px 25px rgba(27, 77, 62, 0.12);
+  box-shadow: var(--shadow-panel);
 }
 
 .notice p {
@@ -117,7 +117,7 @@ onMounted(async () => {
   height: 2rem;
   font: inherit;
   font-weight: 700;
-  color: var(--primary-green, #1b4d3e);
+  color: var(--primary-green);
   background: none;
   border: none;
   border-radius: 50%;
@@ -125,7 +125,7 @@ onMounted(async () => {
 }
 
 .notice-close:hover {
-  background: #f0f8f1;
+  background: var(--hover-bg);
 }
 
 .home-container {
@@ -147,8 +147,8 @@ onMounted(async () => {
   max-width: 550px;
  
   background-color: rgba(255, 255, 255, 0.85);
-  border-radius: 24px; 
-  box-shadow: 0 10px 25px rgba(27, 77, 62, 0.12); 
+  border-radius: 24px;
+  box-shadow: var(--shadow-panel);
   
   text-align: center;
 }
@@ -157,12 +157,12 @@ onMounted(async () => {
   width: 100%;
   max-width: 1000px; 
   
-  --color-ocean: transparent;       
-  --color-country: #41ac5a;      
+  --color-ocean: transparent;
+  --color-country: var(--green-bright);
   --color-country-hover: #4dbd67;
-  --color-graticule: transparent; 
-  --color-border: #1B4D3E;
-  --color-accent: #1B4D3E;          /* färgen på det land man klickat på */
+  --color-graticule: transparent;
+  --color-border: var(--primary-green);
+  --color-accent: var(--primary-green);  /* färgen på det land man klickat på */
   /*--color-ocean-border: rgba(27, 77, 62, 0.12)     */  
 
 }

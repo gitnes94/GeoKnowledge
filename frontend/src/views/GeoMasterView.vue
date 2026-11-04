@@ -68,7 +68,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="geomaster">
+  <section class="page geomaster">
     <p v-if="status === 'error' || worldError" class="status">Något gick fel: {{ error || worldError }}</p>
     <p v-else-if="status === 'loading' || !world" class="status">Packar väskan…</p>
 
@@ -99,8 +99,8 @@ onMounted(async () => {
         <QuizRewards :save-status="saveStatus" :xp="xp" :new-trophies="newTrophies" />
 
         <div class="actions">
-          <button class="primary" @click="startJourney">Ny resa</button>
-          <RouterLink to="/quiz" class="secondary">Välj ett annat quiz</RouterLink>
+          <button class="btn btn-primary" @click="startJourney">Ny resa</button>
+          <RouterLink to="/quiz" class="btn">Välj ett annat quiz</RouterLink>
         </div>
       </div>
 
@@ -124,19 +124,14 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+/* Panelen kommer från .page i style.css – här bara det som skiljer sig */
 .geomaster {
   /* CountryShape färgar landet med de här variablerna */
-  --color-country: #41ac5a;
-  --color-accent: var(--primary-green, #1b4d3e);
+  --color-country: var(--green-bright);
+  --color-accent: var(--primary-green);
 
-  max-width: 44rem;
-  width: calc(100% - 2rem);
-  margin: 1.5rem auto;
   padding: 1.5rem;
   text-align: center;
-  background: var(--card-bg, #ffffff);
-  border-radius: 1.75rem;
-  box-shadow: 0 10px 25px rgba(27, 77, 62, 0.12);
 }
 
 .status {
@@ -192,25 +187,9 @@ onMounted(async () => {
   margin-top: 1.5rem;
 }
 
-.primary,
-.secondary {
+/* Knapparna på slutskärmen är lite större än en vanlig .btn */
+.actions .btn {
   padding: 0.75rem 1.75rem;
-  font: inherit;
-  font-weight: 700;
-  border: 3px solid var(--primary-green, #1b4d3e);
-  border-radius: 999px;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.primary {
-  color: #ffffff;
-  background: var(--primary-green, #1b4d3e);
-}
-
-.secondary {
-  color: var(--primary-green, #1b4d3e);
-  background: #ffffff;
 }
 
 @media (max-width: 600px) {

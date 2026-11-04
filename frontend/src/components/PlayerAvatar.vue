@@ -51,7 +51,7 @@ const initial = computed(() => ([...(props.name || '')][0] || '?').toUpperCase()
 
 .initial {
   background: #d6e9da;
-  color: var(--primary-green, #1b4d3e);
+  color: var(--primary-green);
   font-weight: 750;
 }
 </style>

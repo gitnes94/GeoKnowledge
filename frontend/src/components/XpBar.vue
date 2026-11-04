@@ -100,13 +100,13 @@ onMounted(() => {
   text-align: center;
   font-size: 1.1rem;
   font-weight: 700;
-  color: #2f9e4f;
+  color: var(--green-selected);
 }
 
 .bonus {
   display: block;
   font-size: 0.9rem;
-  color: #a65d00;
+  color: var(--orange-dark);
 }
 
 .row {
@@ -122,16 +122,16 @@ onMounted(() => {
 
 .track {
   height: 0.875rem;
-  border-radius: 999px;
-  background: #e3f1e6;
-  border: 2px solid var(--primary-green, #1b4d3e);
+  border-radius: var(--radius-pill);
+  background: var(--track-bg);
+  border: 2px solid var(--primary-green);
   overflow: hidden;
 }
 
 .fill {
   height: 100%;
-  background: #41ac5a;
-  border-radius: 999px;
+  background: var(--green-bright);
+  border-radius: var(--radius-pill);
   transition: width 0.6s ease;
 }
 </style>
