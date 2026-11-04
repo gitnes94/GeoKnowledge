@@ -1,76 +1,127 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { getLeaderboard } from '@/services/leaderboard'
+import { useAuthStore } from '@/services/auth'
+import PlayerAvatar from '@/components/PlayerAvatar.vue'
 
+const authStore = useAuthStore()
+
+// Listorna. noun används i "Du har svarat på 12 av 30 flaggfrågor".
 const tables = [
-  { key: 'allQuizzes', title: 'Alla quiz', kind: 'accuracy', description: 'Bäst genomsnittlig träffsäkerhet' },
-  { key: 'contour', title: 'Konturquiz', kind: 'accuracy', description: 'Känn igen länder på deras form' },
-  { key: 'flags', title: 'Flaggquiz', kind: 'accuracy', description: 'Världens flaggor' },
-  { key: 'capitals', title: 'Huvudstadsquiz', kind: 'accuracy', description: 'Hitta huvudstäderna' },
-  { key: 'geoMaster', title: 'GeoMaster', kind: 'accuracy', description: 'En geografisk resa med blandade frågor'},
+  { key: 'allQuizzes', title: 'Alla quiz', kind: 'accuracy', description: 'Bäst genomsnittlig träffsäkerhet', noun: 'frågor' },
+  { key: 'contour', title: 'Konturquiz', kind: 'accuracy', description: 'Känn igen länder på deras form', noun: 'konturfrågor' },
+  { key: 'flags', title: 'Flaggquiz', kind: 'accuracy', description: 'Världens flaggor', noun: 'flaggfrågor' },
+  { key: 'capitals', title: 'Huvudstadsquiz', kind: 'accuracy', description: 'Hitta huvudstäderna', noun: 'huvudstadsfrågor' },
+  { key: 'geoMaster', title: 'GeoMaster', kind: 'accuracy', description: 'En geografisk resa med blandade frågor', noun: 'GeoMaster-frågor' },
   { key: 'xp', title: 'Mest XP', kind: 'xp', description: 'Samla erfarenhet på alla quiz' },
   { key: 'quizCount', title: 'Flest quiz', kind: 'quiz-count', description: 'Vem har spelat allra mest?' },
 ]
+
+// Rubriken på poängkolumnen
+const SCORE_HEADINGS = { accuracy: 'ANDEL RÄTT', xp: 'XP', 'quiz-count': 'QUIZ' }
 
 const leaderboard = ref(null)
 const isLoading = ref(true)
 const errorMessage = ref('')
 const selectedKey = ref('allQuizzes')
 
-// Spelare vars profilbild inte gick att ladda – de får bokstaven i stället
-const failedPictures = ref(new Set())
-
-function pictureFailed(userId) {
-  failedPictures.value = new Set(failedPictures.value).add(userId)
-}
-
-// Visa bilden om spelaren har en och den gick att ladda
-function showPicture(row) {
-  return row.pictureUrl && !failedPictures.value.has(row.userId)
-}
-
-// Första bokstaven i namnet. [...namn] så att t.ex. Å inte delas på mitten.
-function initialOf(name) {
-  return ([...name][0] || '?').toUpperCase()
-}
-
 const activeTable = computed(() => tables.find((table) => table.key === selectedKey.value))
 const activeRows = computed(() => leaderboard.value?.[selectedKey.value] ?? [])
+const isAccuracy = computed(() => activeTable.value.kind === 'accuracy')
 
 // Hur många frågor man måste ha svarat på för att komma med på listorna för
 // andel rätt (bestäms i backenden, leaderboard.js)
 const minAnswers = computed(() => leaderboard.value?.minAnswers ?? 0)
-const isAccuracy = computed(() => activeTable.value.kind === 'accuracy')
 
-function formatScore(row) {
-  if (activeTable.value.kind === 'accuracy') return `${row.percentage}%`
-  if (activeTable.value.kind === 'xp') return `${row.xp} XP`
+// Prispallen: alla med placering 1–3, grupperade per placering. Delar två
+// spelare en placering står de på samma pall (t.ex. två på tredjeplatsen),
+// så att ingen med samma resultat hamnar i listan under.
+//   [{ place: 1, rows: [...] }, { place: 3, rows: [..., ...] }]
+const podiumGroups = computed(() => {
+  const groups = []
+  for (const row of activeRows.value) {
+    if (row.place > 3) break
+    const last = groups[groups.length - 1]
+    if (last && last.place === row.place) last.rows.push(row)
+    else groups.push({ place: row.place, rows: [row] })
+  }
+  return groups
+})
+
+// Listan under pallen: alla med placering 4 och nedåt
+const listRows = computed(() => activeRows.value.filter((row) => row.place > 3))
+
+// ---- Siffror på svenska: 93,3 %, 1 180 XP ----
+const decimal = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 1 })
+const whole = new Intl.NumberFormat('sv-SE')
+//   = mellanslag som inte bryts, så att "93,3 %" hålls ihop
+const percent = (value) => `${decimal.format(value)} %`
+
+function scoreValue(row) {
+  if (activeTable.value.kind === 'accuracy') return row.percentage
+  if (activeTable.value.kind === 'xp') return row.xp
   return row.quiz_count
 }
 
-function getProgress(row) {
-  const score = Number(activeTable.value.kind === 'accuracy'
-    ? row.percentage
-    : activeTable.value.kind === 'xp'
-      ? row.xp
-      : row.quiz_count)
-  const leader = activeRows.value[0]
-  const leaderScore = Number(activeTable.value.kind === 'accuracy'
-    ? leader?.percentage
-    : activeTable.value.kind === 'xp'
-      ? leader?.xp
-      : leader?.quiz_count)
+function formatScore(row) {
+  if (activeTable.value.kind === 'accuracy') return percent(row.percentage)
+  if (activeTable.value.kind === 'xp') return `${whole.format(row.xp)} XP`
+  return whole.format(row.quiz_count)
+}
 
+// Stapelns längd i procent av ettans poäng
+function getProgress(row) {
+  const score = Number(scoreValue(row))
+  const leaderScore = Number(activeRows.value[0] ? scoreValue(activeRows.value[0]) : 0)
   if (!Number.isFinite(score) || !Number.isFinite(leaderScore) || leaderScore <= 0) return 0
   return Math.min(100, Math.max(0, (score / leaderScore) * 100))
 }
 
-function getRankClass(place) {
-  if (place === 1) return 'gold'
-  if (place === 2) return 'silver'
-  if (place === 3) return 'bronze'
-  return ''
+// Medalj efter placering. Delad placering ger samma medalj.
+const MEDALS = { 1: '🥇', 2: '🥈', 3: '🥉' }
+
+// Pallarna (första, andra, tredje) i ordning. Ettan står i mitten och
+// högst – det sköts med CSS (order och höjd).
+const SPOTS = ['first', 'second', 'third']
+
+// Profilbildens storlek: störst för ettan, mindre när flera delar en pall
+function podiumAvatarSize(index, playersOnSpot) {
+  const size = index === 0 ? 4.5 : 3.5
+  return playersOnSpot > 1 ? size * 0.75 : size
 }
+
+// ---- Din egen placering ----
+
+const isMe = (row) => authStore.isLoggedIn && row.userId === authStore.user?.id
+
+// Det som visas längst ner om man inte syns på listan:
+//   { kind: 'progress', answered, left } – för få frågor för att komma med
+//   { kind: 'place', place, score }      – med, men utanför topp 10
+//   { kind: 'none' }                     – har inte spelat något
+const myStatus = computed(() => {
+  if (!authStore.isLoggedIn || !leaderboard.value?.me) return null
+  if (activeRows.value.some(isMe)) return null
+
+  const mine = leaderboard.value.me[selectedKey.value]
+  if (!mine) return null
+
+  if (isAccuracy.value && mine.place === null) {
+    if (mine.answered === 0 && !leaderboard.value.me.quizCount.place) return { kind: 'none' }
+    return { kind: 'progress', answered: mine.answered, left: minAnswers.value - mine.answered }
+  }
+  if (mine.place === null) return { kind: 'none' }
+
+  const score = activeTable.value.kind === 'accuracy'
+    ? percent(mine.score)
+    : activeTable.value.kind === 'xp'
+      ? `${whole.format(mine.score)} XP`
+      : `${whole.format(mine.score)} quiz`
+  return { kind: 'place', place: mine.place, score }
+})
+
+// Statistiken i rubrikrutan
+const stats = computed(() => leaderboard.value?.stats ?? null)
 
 onMounted(async () => {
   try {
@@ -89,9 +140,31 @@ onMounted(async () => {
     <header class="hero">
       <div class="hero-copy">
         <h1>Topplistor</h1>
-      <p>Kolla runt bland topplistorna och se vem som ligger bäst till.</p>
-
+        <p>Kolla runt bland topplistorna och se vem som ligger bäst till.</p>
       </div>
+
+      <!-- Några siffror om hela GeoKnowledge -->
+      <dl v-if="stats" class="hero-stats">
+        <div class="stat">
+          <dt>Spelare</dt>
+          <dd>{{ whole.format(stats.players) }}</dd>
+        </div>
+        <div class="stat">
+          <dt>Besvarade frågor</dt>
+          <dd>{{ whole.format(stats.answered) }}</dd>
+        </div>
+        <div class="stat stat-week">
+          <dt>Veckans flitigaste</dt>
+          <dd v-if="stats.weekTop" class="week-player">
+            <PlayerAvatar :name="stats.weekTop.username" :picture-url="stats.weekTop.pictureUrl" :size="2" />
+            <span>
+              <span class="week-name">{{ stats.weekTop.username }}</span>
+              <span class="week-count">{{ whole.format(stats.weekTop.answered) }} frågor</span>
+            </span>
+          </dd>
+          <dd v-else class="week-empty">Ingen har spelat den här veckan än</dd>
+        </div>
+      </dl>
     </header>
 
     <p v-if="isLoading" class="state-message" role="status">Hämtar topplistan …</p>
@@ -115,15 +188,11 @@ onMounted(async () => {
 
       <section class="leaderboard-panel" aria-live="polite">
         <header class="panel-heading">
-          <div>
-            <span class="eyebrow">TOPPLISTA</span>
-            <h2>{{ activeTable.title }}</h2>
-            <p>{{ activeTable.description }}</p>
-            <p v-if="isAccuracy && minAnswers" class="requirement">
-              Svara på minst {{ minAnswers }} frågor för att komma med på listan.
-            </p>
-          </div>
-          <span class="metric-badge">{{ activeTable.kind === 'accuracy' ? 'Andel rätt' : activeTable.kind === 'xp' ? 'Erfarenhetspoäng' : 'Genomförda quiz' }}</span>
+          <h2>{{ activeTable.title }}</h2>
+          <p>{{ activeTable.description }}</p>
+          <p v-if="isAccuracy && minAnswers" class="requirement">
+            Svara på minst {{ minAnswers }} frågor för att komma med på listan.
+          </p>
         </header>
 
         <p v-if="activeRows.length === 0" class="empty-message">
@@ -134,39 +203,101 @@ onMounted(async () => {
         </p>
 
         <template v-else>
-          <div class="list-heading">
-            <span>PLACERING</span>
-            <span>SPELARE</span>
-            <span>{{ activeTable.kind === 'accuracy' ? 'ANDEL RÄTT' : activeTable.kind === 'xp' ? 'XP' : 'QUIZ' }}</span>
-          </div>
-          <ol class="player-list">
+          <!-- Prispallen. Ordningen i koden är 1, 2, 3 (så läser skärmläsare
+               upp den), men CSS ställer ettan i mitten: 2 – 1 – 3. -->
+          <ol class="podium" aria-label="Topp 3">
             <li
-              v-for="row in activeRows"
-              :key="row.userId"
-              class="player-row"
-              :class="{ leader: row.place === 1 }"
+              v-for="(group, index) in podiumGroups"
+              :key="group.place"
+              class="podium-spot"
+              :class="[SPOTS[index], { shared: group.rows.length > 1 }]"
             >
-              <span class="rank" :class="getRankClass(row.place)">{{ row.place }}</span>
-              <!-- Profilbilden, eller första bokstaven om bild saknas.
-                   alt är tomt eftersom namnet står direkt bredvid. -->
-              <img
-                v-if="showPicture(row)"
-                :src="row.pictureUrl"
-                alt=""
-                class="row-avatar row-picture"
-                referrerpolicy="no-referrer"
-                loading="lazy"
-                @error="pictureFailed(row.userId)"
-              />
-              <span v-else class="row-avatar" aria-hidden="true">{{ initialOf(row.username) }}</span>
-              <span class="row-name">{{ row.username }}</span>
-              <span class="row-progress" aria-hidden="true">
-                <span :style="{ width: `${getProgress(row)}%` }"></span>
+              <span class="medal" aria-hidden="true">{{ MEDALS[group.place] }}</span>
+              <div class="podium-players">
+                <div
+                  v-for="row in group.rows"
+                  :key="row.userId"
+                  class="podium-player"
+                  :class="{ me: isMe(row) }"
+                >
+                  <PlayerAvatar
+                    class="podium-avatar"
+                    :name="row.username"
+                    :picture-url="row.pictureUrl"
+                    :size="podiumAvatarSize(index, group.rows.length)"
+                  />
+                  <span class="podium-name">
+                    {{ row.username }}<span v-if="isMe(row)" class="you"> (du)</span>
+                  </span>
+                </div>
+              </div>
+              <!-- Samma poäng för alla på samma pall (det är därför de delar platsen) -->
+              <strong class="podium-score">{{ formatScore(group.rows[0]) }}</strong>
+              <span class="podium-block">
+                <span class="visually-hidden">Plats </span>{{ group.place }}
               </span>
-              <strong class="row-score">{{ formatScore(row) }}</strong>
             </li>
           </ol>
+
+          <!-- Plats 4 och nedåt -->
+          <template v-if="listRows.length > 0">
+            <div class="list-heading" aria-hidden="true">
+              <span>PLATS</span>
+              <span>SPELARE</span>
+              <span>{{ SCORE_HEADINGS[activeTable.kind] }}</span>
+            </div>
+            <ol class="player-list">
+              <li
+                v-for="row in listRows"
+                :key="row.userId"
+                class="player-row"
+                :class="{ me: isMe(row) }"
+              >
+                <span class="rank">{{ row.place }}</span>
+                <PlayerAvatar :name="row.username" :picture-url="row.pictureUrl" :size="2" />
+                <span class="row-name">
+                  {{ row.username }}<span v-if="isMe(row)" class="you"> (du)</span>
+                </span>
+                <span class="row-progress" aria-hidden="true">
+                  <span :style="{ width: `${getProgress(row)}%` }"></span>
+                </span>
+                <strong class="row-score">{{ formatScore(row) }}</strong>
+              </li>
+            </ol>
+          </template>
         </template>
+
+        <!-- Din egen placering, om du inte syns på listan -->
+        <div v-if="myStatus" class="my-status" :class="myStatus.kind">
+          <template v-if="myStatus.kind === 'progress'">
+            <p>
+              Du har svarat på <strong>{{ myStatus.answered }} av {{ minAnswers }}</strong>
+              {{ activeTable.noun }}. <strong>{{ myStatus.left }} kvar</strong> till listan!
+            </p>
+            <span
+              class="my-progress"
+              role="progressbar"
+              :aria-valuenow="myStatus.answered"
+              aria-valuemin="0"
+              :aria-valuemax="minAnswers"
+              :aria-label="`${myStatus.answered} av ${minAnswers} ${activeTable.noun}`"
+            >
+              <span :style="{ width: `${(myStatus.answered / minAnswers) * 100}%` }"></span>
+            </span>
+            <RouterLink to="/quiz" class="my-link">Spela ett quiz →</RouterLink>
+          </template>
+          <p v-else-if="myStatus.kind === 'place'">
+            Du ligger på <strong>plats {{ myStatus.place }}</strong> med <strong>{{ myStatus.score }}</strong>.
+          </p>
+          <template v-else>
+            <p>Du har inte spelat något quiz än.</p>
+            <RouterLink to="/quiz" class="my-link">Spela ditt första quiz →</RouterLink>
+          </template>
+        </div>
+
+        <p v-if="!authStore.isLoggedIn" class="guest-hint">
+          <RouterLink to="/login">Logga in</RouterLink> för att se din egen placering.
+        </p>
       </section>
     </template>
   </main>
@@ -176,19 +307,22 @@ onMounted(async () => {
 .leaderboard-ex3 {
   --forest: var(--primary-green, #1b4d3e);
   --muted: #526359;
+  /* Orange som combo-räknaren i quizet – markerar "du" */
+  --you: #f08c00;
+  --you-bg: #fff4e0;
   width: min(100% - 2rem, 68rem);
   margin: 1.5rem auto 3rem;
   color: var(--forest);
 }
 
+/* ---- Rubrikrutan ---- */
+
 .hero {
-  position: relative;
   display: grid;
-  min-height: 10rem;
-  grid-template-columns: minmax(0, 1.15fr) minmax(15rem, 0.85fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 25rem);
   align-items: center;
-  overflow: hidden;
-  padding: clamp(1.5rem, 5vw, 3.25rem);
+  gap: 1.5rem 2rem;
+  padding: clamp(1.4rem, 4vw, 2.5rem);
   border-radius: 1.6rem;
   background:
     radial-gradient(ellipse at 82% 30%, rgba(119, 165, 127, 0.3), transparent 38%),
@@ -197,40 +331,9 @@ onMounted(async () => {
   box-shadow: 0 18px 38px rgba(27, 77, 62, 0.18);
 }
 
-.hero-copy {
-  position: relative;
-  z-index: 1;
-}
-
-.back-link {
-  display: inline-block;
-  margin-bottom: 1.25rem;
-  color: #e2eee3;
-  font-size: 0.85rem;
-  font-weight: 650;
-  text-decoration: none;
-}
-
-.back-link:hover {
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-}
-
-.eyebrow,
-.demo-label {
-  font-size: 0.68rem;
-  font-weight: 750;
-  letter-spacing: 0.13em;
-}
-
-.eyebrow {
-  display: block;
-  color: #c5ddc8;
-}
-
 h1 {
-  margin: 0.4rem 0 0;
-  font-size: clamp(2.4rem, 5.5vw, 4rem);
+  margin: 0;
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
   font-weight: 650;
   letter-spacing: -0.065em;
   line-height: 0.98;
@@ -244,26 +347,80 @@ h1 {
   line-height: 1.6;
 }
 
-.demo-label {
-  display: inline-block;
-  padding: 0.42rem 0.6rem;
-  border: 1px solid rgba(226, 238, 227, 0.32);
-  border-radius: 999px;
-  color: #e2eee3;
-  font-size: 0.61rem;
-  letter-spacing: 0.08em;
+/* Tre rutor: Spelare och Besvarade frågor bredvid varandra,
+   Veckans flitigaste över hela bredden under */
+.hero-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin: 0;
 }
 
+.stat {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(226, 238, 227, 0.18);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.stat dt {
+  color: #c5ddc8;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.stat dd {
+  margin: 0.2rem 0 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.stat-week {
+  grid-column: 1 / -1;
+}
+
+.stat dd.week-player {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+  font-size: 1rem;
+}
+
+.week-name {
+  display: block;
+  font-weight: 700;
+}
+
+.week-count {
+  display: block;
+  color: #c5ddc8;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.stat dd.week-empty {
+  color: #d3e3d6;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* ---- Flikarna ---- */
+
+/* Radbryts i stället för att scrolla i sidled, så att alla listor syns */
 .category-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.4rem;
   margin: 1.25rem 0 1rem;
   padding: 0.35rem;
-  overflow-x: auto;
   border: 1px solid rgba(27, 77, 62, 0.08);
   border-radius: 1rem;
   background: rgba(255, 255, 255, 0.78);
-  scrollbar-width: thin;
 }
 
 .category-tabs button {
@@ -291,10 +448,13 @@ h1 {
 }
 
 .category-tabs button:focus-visible,
-.back-link:focus-visible {
+.my-link:focus-visible,
+.guest-hint a:focus-visible {
   outline: 3px solid #78b795;
   outline-offset: 3px;
 }
+
+/* ---- Listans kort ---- */
 
 .leaderboard-panel {
   padding: clamp(1.1rem, 4vw, 2rem);
@@ -305,15 +465,11 @@ h1 {
 }
 
 .panel-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .panel-heading h2 {
-  margin: 0.2rem 0 0;
+  margin: 0;
   font-size: 1.35rem;
   letter-spacing: -0.025em;
 }
@@ -324,34 +480,136 @@ h1 {
   font-size: 0.86rem;
 }
 
-.panel-heading .eyebrow {
-  color: var(--muted);
+.panel-heading .requirement {
+  margin-top: 0.25rem;
+  font-weight: 650;
 }
 
-.metric-badge {
-  padding: 0.5rem 0.75rem;
-  border-radius: 999px;
-  background: #f1f7f2;
-  color: #577365;
-  font-size: 0.76rem;
-  font-weight: 650;
+/* ---- Prispallen ---- */
+
+.podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: clamp(0.5rem, 2vw, 1rem);
+  margin: 0.5rem 0 1.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.podium-spot {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  max-width: 12rem;
+  text-align: center;
+}
+
+/* En pall som flera delar får mer plats, så att namnen får plats */
+.podium-spot.shared {
+  flex-grow: 1.6;
+  max-width: 19rem;
+}
+
+/* Ettan i mitten, tvåan till vänster, trean till höger */
+.podium-spot.first { order: 2; }
+.podium-spot.second { order: 1; }
+.podium-spot.third { order: 3; }
+
+.medal {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.first .medal {
+  font-size: 2.1rem;
+}
+
+/* Spelarna på en pall – flera bredvid varandra om de delar placeringen */
+.podium-players {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem 0.6rem;
+  max-width: 100%;
+}
+
+.podium-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.podium-avatar {
+  border: 3px solid #fff;
+  box-shadow: 0 6px 16px rgba(27, 77, 62, 0.18);
+}
+
+.first .podium-avatar {
+  border-color: #e8c35a;
+}
+
+.podium-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.row-avatar {
+.podium-score {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Själva pallen: högst för ettan */
+.podium-block {
   display: grid;
-  flex: 0 0 auto;
   place-items: center;
-  border-radius: 50%;
-  background: #d6e9da;
-  color: var(--forest);
+  width: 100%;
+  margin-top: 0.35rem;
+  border-radius: 0.9rem 0.9rem 0.35rem 0.35rem;
+  color: #fff;
+  font-size: 1.4rem;
   font-weight: 750;
 }
+
+.first .podium-block {
+  height: 6rem;
+  background: linear-gradient(180deg, #2c7a55, #1b4d3e);
+  font-size: 1.8rem;
+}
+
+.second .podium-block {
+  height: 4.5rem;
+  background: linear-gradient(180deg, #4f9a6c, #2f6e50);
+}
+
+.third .podium-block {
+  height: 3.5rem;
+  background: linear-gradient(180deg, #7bb68a, #4b8a63);
+}
+
+/* Du på pallen: orange ring runt bilden */
+.podium-player.me .podium-avatar {
+  border-color: var(--you);
+}
+
+/* ---- Listan, plats 4 och nedåt ---- */
 
 .list-heading,
 .player-row {
   display: grid;
-  grid-template-columns: 2.2rem 2.2rem minmax(0, 1fr) minmax(4rem, 8rem) auto;
+  /* Fast bredd på poängkolumnen så att staplarna börjar på samma ställe */
+  grid-template-columns: 2.2rem 2.2rem minmax(0, 1fr) minmax(4rem, 8rem) 5.5rem;
   align-items: center;
   column-gap: 0.75rem;
 }
@@ -385,7 +643,7 @@ h1 {
 }
 
 .player-row {
-  min-height: 3.8rem;
+  min-height: 3.6rem;
   padding: 0.45rem 0.75rem;
   border-bottom: 1px solid #edf1ed;
 }
@@ -394,9 +652,12 @@ h1 {
   border-bottom: 0;
 }
 
-.player-row.leader {
+/* Din rad */
+.player-row.me {
   border-radius: 0.7rem;
-  background: #f7faf6;
+  border-bottom-color: transparent;
+  background: var(--you-bg);
+  box-shadow: inset 3px 0 0 var(--you);
 }
 
 .rank {
@@ -405,35 +666,17 @@ h1 {
   font-weight: 700;
 }
 
-.rank.gold {
-  color: #855a15;
-}
-
-.rank.silver {
-  color: #5b6667;
-}
-
-.rank.bronze {
-  color: #7d4d29;
-}
-
-.row-avatar {
-  width: 2rem;
-  height: 2rem;
-  font-size: 0.78rem;
-}
-
-/* Profilbilden fyller den runda rutan utan att bli utdragen */
-.row-picture {
-  object-fit: cover;
-}
-
 .row-name {
   overflow: hidden;
   font-size: 0.92rem;
   font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.you {
+  color: #a65d00;
+  font-weight: 750;
 }
 
 .row-progress {
@@ -453,16 +696,77 @@ h1 {
 
 .row-score {
   font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
   text-align: right;
   white-space: nowrap;
 }
 
-.panel-heading .requirement {
-  margin-top: 0.25rem;
-  font-size: 0.85rem;
-  font-weight: 650;
-  color: var(--muted);
+/* ---- Din placering längst ner ---- */
+
+.my-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  margin-top: 1.25rem;
+  padding: 0.9rem 1.1rem;
+  border: 2px solid var(--you);
+  border-radius: 1rem;
+  background: var(--you-bg);
 }
+
+.my-status p {
+  flex: 1 1 16rem;
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.my-progress {
+  display: block;
+  flex: 1 1 100%;
+  order: 3;
+  height: 0.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #ffe2b3;
+}
+
+.my-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--you);
+}
+
+.my-link {
+  padding: 0.45rem 0.9rem;
+  border: 2px solid var(--forest);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--forest);
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.my-link:hover {
+  background: #f0f8f1;
+}
+
+.guest-hint {
+  margin: 1.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.guest-hint a {
+  color: var(--forest);
+  font-weight: 700;
+}
+
+/* ---- Meddelanden ---- */
 
 .empty-message,
 .state-message {
@@ -481,25 +785,33 @@ h1 {
   color: #9e2929;
 }
 
-@media (max-width: 680px) {
+/* Text som bara skärmläsare läser upp */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---- Smala skärmar ---- */
+
+@media (max-width: 760px) {
   .hero {
-    min-height: 15rem;
-    grid-template-columns: minmax(0, 1fr) minmax(10rem, 0.7fr);
+    grid-template-columns: 1fr;
   }
 
-  .panel-heading {
-    align-items: flex-start;
-    flex-direction: column;
+  .hero-stats {
+    grid-template-columns: 1fr 1fr;
   }
+}
 
+@media (max-width: 680px) {
   .list-heading,
   .player-row {
-    grid-template-columns: 1.6rem 1.8rem minmax(0, 1fr) auto;
+    grid-template-columns: 1.8rem 2rem minmax(0, 1fr) auto;
     column-gap: 0.5rem;
-  }
-
-  .list-heading span:nth-child(2) {
-    grid-column: 3;
   }
 
   .list-heading span:last-child {
@@ -518,44 +830,33 @@ h1 {
   }
 
   .hero {
-    min-height: 0;
-    grid-template-columns: 1fr;
-    padding: 1.4rem;
-  }
-
-  .back-link {
-    margin-bottom: 1rem;
-  }
-
-  .hero-art {
-    position: absolute;
-    right: -3.4rem;
-    bottom: 0.3rem;
-    width: 13rem;
-    min-height: 0;
-    opacity: 0.43;
-  }
-
-  .hero-art svg {
-    width: 100%;
-  }
-
-  .art-caption {
-    display: none;
+    padding: 1.3rem;
   }
 
   .hero-copy > p {
-    max-width: 17rem;
     font-size: 0.9rem;
   }
 
-  .category-tabs {
-    margin-top: 0.9rem;
+  .stat dd {
+    font-size: 1.35rem;
   }
 
   .category-tabs button {
-    padding: 0.65rem 0.8rem;
+    padding: 0.6rem 0.75rem;
   }
 
+  .podium-name {
+    font-size: 0.85rem;
+  }
+
+  .first .podium-block { height: 4.5rem; }
+  .second .podium-block { height: 3.5rem; }
+  .third .podium-block { height: 2.75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .category-tabs button {
+    transition: none;
+  }
 }
 </style>
