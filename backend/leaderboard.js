@@ -3,11 +3,17 @@ const router = express.Router();
 const pool = require('./db');
 const { XP_PER_CORRECT } = require('./xp');
 
+// Så många frågor man måste ha svarat på för att komma med på listorna för
+// andel rätt. Annars hamnar den som spelat ett enda quiz med 10/10 (100 %)
+// före den som har 980 rätt av 1 000. 30 frågor = tre vanliga quiz.
+const MIN_ANSWERS = 30;
+
 // Funktion för att hämta topplista baserat på träffsäkerhet (procent rätt).
 // Om 'quizType' skickas med, hämtas listan bara för den typen, annars för alla.
+// Bara spelare som har svarat på minst MIN_ANSWERS frågor (av den typen) kommer med.
 async function getAccuracyLeaderboard(quizType) {
     const filter = quizType ? 'WHERE r.quiz_type = ?' : '';
-    const params = quizType ? [quizType] : [];
+    const params = quizType ? [quizType, MIN_ANSWERS] : [MIN_ANSWERS];
 
     // Hämtar data från databasen: summerar totala antal rätt och totala antal frågor per användare.
     // Sorterar sedan resultatet med bäst träffsäkerhet (kvot) högst upp.
@@ -23,7 +29,7 @@ async function getAccuracyLeaderboard(quizType) {
         JOIN users u ON u.id = r.user_id
         ${filter}
         GROUP BY u.id, u.username, u.picture_url
-        HAVING SUM(r.total) > 0
+        HAVING SUM(r.total) >= ?
         ORDER BY
             SUM(r.correct_count) / SUM(r.total) DESC,
             u.username ASC
@@ -146,6 +152,8 @@ router.get('/', async (req, res) => {
         ]);
         // Skickar tillbaka all data snyggt paketerat i ett enda JSON-objekt till frontend
         return res.json({
+            // Gränsen för listorna med andel rätt, så att sidan kan förklara den
+            minAnswers: MIN_ANSWERS,
             contour,
             flags,
             capitals,

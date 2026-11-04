@@ -37,6 +37,11 @@ function initialOf(name) {
 const activeTable = computed(() => tables.find((table) => table.key === selectedKey.value))
 const activeRows = computed(() => leaderboard.value?.[selectedKey.value] ?? [])
 
+// Hur många frågor man måste ha svarat på för att komma med på listorna för
+// andel rätt (bestäms i backenden, leaderboard.js)
+const minAnswers = computed(() => leaderboard.value?.minAnswers ?? 0)
+const isAccuracy = computed(() => activeTable.value.kind === 'accuracy')
+
 function formatScore(row) {
   if (activeTable.value.kind === 'accuracy') return `${row.percentage}%`
   if (activeTable.value.kind === 'xp') return `${row.xp} XP`
@@ -114,12 +119,18 @@ onMounted(async () => {
             <span class="eyebrow">TOPPLISTA</span>
             <h2>{{ activeTable.title }}</h2>
             <p>{{ activeTable.description }}</p>
+            <p v-if="isAccuracy && minAnswers" class="requirement">
+              Svara på minst {{ minAnswers }} frågor för att komma med på listan.
+            </p>
           </div>
           <span class="metric-badge">{{ activeTable.kind === 'accuracy' ? 'Andel rätt' : activeTable.kind === 'xp' ? 'Erfarenhetspoäng' : 'Genomförda quiz' }}</span>
         </header>
 
         <p v-if="activeRows.length === 0" class="empty-message">
-          Inga resultat ännu. Bli först på listan!
+          <template v-if="isAccuracy && minAnswers">
+            Ingen har svarat på {{ minAnswers }} frågor här än. Bli först på listan!
+          </template>
+          <template v-else>Inga resultat ännu. Bli först på listan!</template>
         </p>
 
         <template v-else>
@@ -444,6 +455,13 @@ h1 {
   font-size: 0.88rem;
   text-align: right;
   white-space: nowrap;
+}
+
+.panel-heading .requirement {
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: var(--muted);
 }
 
 .empty-message,
