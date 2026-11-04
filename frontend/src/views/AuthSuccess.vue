@@ -24,9 +24,11 @@ function readToken() {
 onMounted(async () => {
     const token = readToken();
 
-    // Ta bort token ur adressfältet och historiken direkt, så att den inte
-    // syns, sparas i historiken eller följer med om någon kopierar adressen
-    window.history.replaceState(window.history.state, '', route.path);
+    // Ta bort token ur adressen direkt, så att den inte syns, sparas i
+    // historiken eller följer med om någon kopierar adressen. Det görs via
+    // routern, så att även routerns egen historik (history.state) blir av
+    // med den – annars kunde Tillbaka-knappen ta fram den igen.
+    await router.replace({ path: route.path });
 
     if (typeof token !== 'string' || !token) {
         await router.replace('/login?error=AuthenticationFailed');

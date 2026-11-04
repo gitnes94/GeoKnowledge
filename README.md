@@ -225,5 +225,6 @@ GeoKnowledge/
 | `secretOrPrivateKey must have a value` | `JWT_SECRET` saknas i `backend/.env` |
 | Tabellerna saknas i Adminer | Kör `docker compose down -v` och sedan `docker compose up -d` |
 | Tom sida när man klickar på en länk | Adressen saknas i `frontend/src/router/index.js` |
+| `Port 5173 is already in use` | Frontenden körs redan i en annan terminal – stäng den. Frontenden måste ligga på 5173, annars släpper backenden inte in anropen (CORS, se `FRONTEND_URL`) |
 | "Kunde inte starta quizet. Är servern igång?" | Backenden körs inte – starta den med `npm run dev` i `backend` |
 | "Du har startat väldigt många quiz" | Över 40 quiz på 10 minuter. Vänta en stund, eller starta om backenden när du utvecklar |
