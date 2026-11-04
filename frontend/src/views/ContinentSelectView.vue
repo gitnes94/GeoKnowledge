@@ -93,10 +93,18 @@ h2 {
 }
 
 /* Korten bredvid varandra, under varandra på smala skärmar */
+/* minmax(0, 1fr): kolumnerna får aldrig bli bredare än panelen */
 .types {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+}
+
+/* Riktigt smala skärmar: ett kort per rad, så att långa namn får plats */
+@media (max-width: 360px) {
+  .types {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Utseende, hover och "vald" kommer från .card i style.css – här bara innehållets layout */

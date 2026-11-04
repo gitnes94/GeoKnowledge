@@ -328,7 +328,7 @@ onUnmounted(stopTimer)
 /* Svarsknapparna: två kolumner, en kolumn på smala skärmar */
 .options {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.875rem;
 }
 
@@ -407,10 +407,18 @@ onUnmounted(stopTimer)
 
   .option {
     padding: 0.625rem 0.5rem;
+    overflow-wrap: break-word;
   }
 
   .next {
     margin-top: 1rem;
+  }
+}
+
+/* Riktigt smala skärmar: ett svar per rad, så att långa namn får plats */
+@media (max-width: 360px) {
+  .options {
+    grid-template-columns: 1fr;
   }
 }
 </style>

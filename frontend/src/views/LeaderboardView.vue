@@ -759,6 +759,7 @@ h1 {
 
 .error-message {
   color: var(--color-wrong);
+}
 
 /* Text som bara skärmläsare läser upp */
 .visually-hidden {
