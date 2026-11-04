@@ -758,8 +758,7 @@ h1 {
 }
 
 .error-message {
-  color: #9e2929;
-}
+  color: var(--color-wrong);
 
 /* Text som bara skärmläsare läser upp */
 .visually-hidden {

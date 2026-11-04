@@ -139,7 +139,7 @@ const routePoints = computed(() => stops.value.map((stop) => `${stop.x},${stop.y
 /* Resvägen: streckad linje mellan länderna */
 .route {
   fill: none;
-  stroke: var(--primary-green, #1b4d3e);
+  stroke: var(--primary-green);
   stroke-width: 2.5;
   stroke-dasharray: 6 5;
   stroke-linecap: round;
@@ -147,7 +147,7 @@ const routePoints = computed(() => stops.value.map((stop) => `${stop.x},${stop.y
 }
 
 .stop {
-  fill: var(--primary-green, #1b4d3e);
+  fill: var(--primary-green);
   stroke: #ffffff;
   stroke-width: 1.5;
 }
