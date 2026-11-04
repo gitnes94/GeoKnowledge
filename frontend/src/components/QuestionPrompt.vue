@@ -76,4 +76,16 @@ defineProps({
     font-size: 1.75rem;
   }
 }
+
+/* Mobil: lägre fråga i de vanliga quizen, så att svarsknapparna och Nästa får plats.
+   :not(.compact) – GeoMaster har redan sin egen storlek ovanför. */
+@media (max-width: 520px) {
+  .question-prompt:not(.compact) {
+    margin: 0.75rem 0 1rem;
+  }
+
+  .question-prompt.kind-shape:not(.compact) { height: 10rem; }
+  .question-prompt.kind-flag:not(.compact) { height: 9rem; }
+  .question-prompt.kind-capital:not(.compact) { height: 6rem; }
+}
 </style>

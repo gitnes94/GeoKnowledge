@@ -332,12 +332,6 @@ onUnmounted(stopTimer)
   gap: 0.875rem;
 }
 
-@media (max-width: 480px) {
-  .options {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* Utseendet kommer från .btn i style.css – här bara storlek och skugga */
 .option {
   padding: 0.875rem 1rem;
@@ -404,4 +398,19 @@ onUnmounted(stopTimer)
   padding: 0.75rem 2rem;
 }
 
+/* Mobil: svarsknapparna två och två och lite tätare, så att Nästa syns utan att scrolla.
+   Ligger sist så att den vinner över .options, .option och .next ovanför. */
+@media (max-width: 520px) {
+  .options {
+    gap: 0.5rem;
+  }
+
+  .option {
+    padding: 0.625rem 0.5rem;
+  }
+
+  .next {
+    margin-top: 1rem;
+  }
+}
 </style>

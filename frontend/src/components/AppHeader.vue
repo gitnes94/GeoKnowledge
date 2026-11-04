@@ -184,6 +184,7 @@ button.nav-button {
   .main-nav {
     gap: 0.5rem;
     padding: 0 1rem;
+    margin-bottom: 0.75rem;
   }
 
   .nav-button {

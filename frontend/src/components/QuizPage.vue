@@ -138,4 +138,11 @@ h2 {
   font-size: 0.875rem;
   font-weight: 700;
 }
+
+/* Mobil: mindre rubrik, så att den får plats på en rad */
+@media (max-width: 520px) {
+  h2 {
+    font-size: 1.3rem;
+  }
+}
 </style>

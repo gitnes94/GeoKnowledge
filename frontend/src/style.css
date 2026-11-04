@@ -150,6 +150,7 @@ button.card:disabled {
 @media (max-width: 520px) {
   .page {
     width: calc(100% - 1rem);
+    margin: 0.75rem auto;
     padding: 1.5rem 1rem;
   }
 }
