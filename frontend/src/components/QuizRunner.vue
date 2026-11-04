@@ -227,7 +227,7 @@ onUnmounted(stopTimer)
         <button
             v-for="option in currentQuestion.options"
             :key="option.id"
-            class="option"
+            class="btn option"
             :class="{ selected: option.id === selectedId, checking: checking && option.id === selectedId, correct: isCorrect(option), wrong: isWrong(option) }"
             :disabled="selectedId !== null || checking || isFinished"
             @click="selectAnswer(option)"
@@ -239,7 +239,7 @@ onUnmounted(stopTimer)
       <p v-if="answerError" class="answer-error" role="alert">{{ answerError }}</p>
 
       <button v-if="isAnswered"
-              class="next"
+              class="btn btn-primary next"
               :disabled="isFinished"
               @click="nextQuestion">
         {{ outOfLives || currentIndex === questions.length - 1 ? 'Se resultat' : 'Nästa' }}
@@ -254,9 +254,9 @@ onUnmounted(stopTimer)
   display: inline-block;
   margin: 0;
   padding: 0.25rem 0.875rem;
-  border-radius: 999px;
-  background: #41ac5a;
-  color: #ffffff;
+  border-radius: var(--radius-pill);
+  background: var(--green-bright);
+  color: var(--white);
   font-size: 0.875rem;
   font-weight: 700;
 }
@@ -272,10 +272,10 @@ onUnmounted(stopTimer)
 .streak {
   margin: 0;
   padding: 0.25rem 0.875rem;
-  border-radius: 999px;
-  border: 2px solid #f08c00;
-  color: #a65d00;
-  background: #fff4e0;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--orange);
+  color: var(--orange-dark);
+  background: var(--orange-bg);
   font-size: 0.875rem;
   font-weight: 700;
 }
@@ -284,17 +284,16 @@ onUnmounted(stopTimer)
 .lives {
   margin: 0;
   padding: 0.125rem 0.625rem;
-  border-radius: 999px;
-  background: #ffffff;
-  border: 2px solid rgba(27, 77, 62, 0.15);
-  font-size: 0.875rem;
+  border-radius: var(--radius-pill);
+  background: var(--card-bg);
+  border: 2px solid var(--line);
   letter-spacing: 0.1em;
 }
 
 /* Combon är igång: fylld orange och en liten puls */
 .streak.active {
-  color: #ffffff;
-  background: #f08c00;
+  color: var(--white);
+  background: var(--orange);
   animation: pulse 0.4s ease-out;
 }
 
@@ -313,9 +312,9 @@ onUnmounted(stopTimer)
   display: inline-block;
   margin: 0 0 1.5rem;
   padding: 0.5rem 1.25rem;
-  border-radius: 999px;
-  background: var(--primary-green, #1b4d3e);
-  color: #ffffff;
+  border-radius: var(--radius-pill);
+  background: var(--primary-green);
+  color: var(--white);
   font-size: 1.125rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -339,25 +338,14 @@ onUnmounted(stopTimer)
   }
 }
 
-button {
-  font: inherit;
-  font-weight: 700;
-  border: 3px solid var(--primary-green, #1b4d3e);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
-}
-
+/* Utseendet kommer från .btn i style.css – här bara storlek och skugga */
 .option {
   padding: 0.875rem 1rem;
-  color: var(--primary-green, #1b4d3e);
-  background: #ffffff;
-  box-shadow: 0 4px 10px rgba(27, 77, 62, 0.12);
+  box-shadow: var(--shadow-card);
 }
 
 .option:hover:not(:disabled) {
   transform: translateY(-2px);
-  background: #f0f8f1;
 }
 
 /* Efter svar: det valda alternativet markeras, de andra tonas ned */
@@ -368,21 +356,21 @@ button {
 
 .option.selected {
   opacity: 1;
-  background: #e3f1e6;
-  box-shadow: 0 0 0 4px rgba(65, 172, 90, 0.3);
+  background: var(--track-bg);
+  box-shadow: var(--ring-selected);
 }
 
 /* Feedback efter svar: rätt svar grönt, fel svar rött */
 .option.correct {
   opacity: 1;
-  color: #ffffff;
+  color: var(--white);
   background: var(--color-correct);
   border-color: var(--color-correct);
 }
 
 .option.wrong {
   opacity: 1;
-  color: #ffffff;
+  color: var(--white);
   background: var(--color-wrong);
   border-color: var(--color-wrong);
   box-shadow: 0 0 0 4px rgba(198, 40, 40, 0.3);
@@ -410,15 +398,10 @@ button {
   font-weight: 700;
 }
 
+/* Nästa-knappen är lite större än en vanlig .btn */
 .next {
   margin-top: 1.5rem;
   padding: 0.75rem 2rem;
-  color: #ffffff;
-  background: var(--primary-green, #1b4d3e);
 }
 
-.next:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
 </style>

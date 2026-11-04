@@ -44,6 +44,13 @@
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
   color: var(--primary-green);
   background: var(--bg-color);
+
+  /* Övrigt */
+  --white: #ffffff;                 /* text på grön/orange bakgrund */
+  --orange-bg: #fff4e0;             /* combo-räknaren */
+  --color-warning: #b5452f;         /* varningstext, t.ex. "kunde inte spara" */
+  --line: rgba(27, 77, 62, 0.15);   /* tunna kanter */
+  --ring-selected: 0 0 0 4px rgba(65, 172, 90, 0.3);  /* ring runt valt kort */
 }
 
 /* Bredd och höjd inkluderar padding – gör layout mycket enklare */
@@ -69,9 +76,10 @@ body {
   box-shadow: var(--shadow-panel);
 }
 
-/* Klickbart kort (menyval, quiztyp, världsdel) */
+/* Kort – vit ruta med grön kant */
 .card {
   padding: 1.25rem 1rem;
+  font: inherit;
   color: var(--primary-green);
   background: var(--card-bg);
   border: var(--border);
@@ -80,14 +88,28 @@ body {
   transition: transform 0.15s ease, background 0.15s ease;
 }
 
-.card:hover:not(:disabled) {
+/* Klickbara kort (knappar och länkar) */
+a.card,
+button.card {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+a.card:hover,
+button.card:hover:not(:disabled) {
+  transform: translateY(-2px);
   background: var(--hover-bg);
+}
+
+button.card:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .card.selected {
   background: var(--selected-bg);
   border-color: var(--green-selected);
-  box-shadow: 0 0 0 4px rgba(65, 172, 90, 0.3);
+  box-shadow: var(--ring-selected);
 }
 
 /* Rund knapp – vit med grön kant */
@@ -100,6 +122,8 @@ body {
   border: var(--border);
   border-radius: var(--radius-pill);
   cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.15s ease, background 0.15s ease;
 }
 
 .btn:hover:not(:disabled) {
@@ -113,7 +137,7 @@ body {
 
 /* Huvudknapp – grön med vit text */
 .btn-primary {
-  color: #ffffff;
+  color: var(--white);
   background: var(--primary-green);
 }
 

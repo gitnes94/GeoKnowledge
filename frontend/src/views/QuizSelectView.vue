@@ -78,7 +78,7 @@ function startQuiz() {
 </script>
 
 <template>
-  <section class="quiz-select">
+  <section class="page quiz-select">
     <h2>Välj quiz</h2>
     <p class="intro">Vilken typ av quiz vill du träna på?</p>
 
@@ -86,7 +86,7 @@ function startQuiz() {
       <button
         v-for="type in QUIZ_TYPES"
         :key="type.id"
-        class="type-card"
+        class="card type-card"
         :class="{ selected: type.id === selectedId }"
         :disabled="!isAvailable(type)"
         @click="selectType(type)"
@@ -109,7 +109,7 @@ function startQuiz() {
         v-for="mode in MODES"
         :key="mode.id"
         type="button"
-        class="mode"
+        class="btn mode"
         :class="{ selected: mode.id === selectedMode.id }"
         :aria-pressed="mode.id === selectedMode.id"
         @click="selectedMode = mode"
@@ -118,22 +118,16 @@ function startQuiz() {
       </button>
     </div>
 
-    <button class="start" :disabled="!selectedType" @click="startQuiz">
+    <button class="btn btn-primary start" :disabled="!selectedType" @click="startQuiz">
       Starta quiz
     </button>
   </section>
 </template>
 
 <style scoped>
+/* Panelen kommer från .page i style.css – här bara centreringen */
 .quiz-select {
-  max-width: 44rem;
-  margin: 1.5rem auto;
-  padding: 2rem 1.5rem;
-  width: calc(100% - 2rem);
   text-align: center;
-  background: var(--card-bg, #ffffff);
-  border-radius: 1.75rem;
-  box-shadow: 0 10px 25px rgba(27, 77, 62, 0.12);
 }
 
 h2 {
@@ -158,37 +152,12 @@ h2 {
   }
 }
 
+/* Utseende, hover och "vald" kommer från .card i style.css – här bara innehållets layout */
 .type-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.375rem;
-  padding: 1.25rem 1rem;
-  font: inherit;
-  color: var(--primary-green, #1b4d3e);
-  background: #ffffff;
-  border: 3px solid var(--primary-green, #1b4d3e);
-  border-radius: 1.25rem;
-  box-shadow: 0 4px 10px rgba(27, 77, 62, 0.12);
-  cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
-}
-
-.type-card:hover:not(:disabled) {
-  transform: translateY(-2px);
-  background: #f0f8f1;
-}
-
-/* Den valda typen markeras tydligt */
-.type-card.selected {
-  background: #d6f5dc;
-  border-color: #2f9e4f;
-  box-shadow: 0 0 0 4px rgba(65, 172, 90, 0.3);
-}
-
-.type-card:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
 }
 
 .icon {
@@ -207,9 +176,9 @@ h2 {
 .badge {
   margin-top: 0.25rem;
   padding: 0.125rem 0.625rem;
-  border-radius: 999px;
-  background: var(--primary-green, #1b4d3e);
-  color: #ffffff;
+  border-radius: var(--radius-pill);
+  background: var(--primary-green);
+  color: var(--white);
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -232,37 +201,15 @@ h2 {
   font-weight: 700;
 }
 
-.mode {
-  padding: 0.5rem 1.25rem;
-  font: inherit;
-  font-weight: 700;
-  color: var(--primary-green, #1b4d3e);
-  background: #ffffff;
-  border: 3px solid var(--primary-green, #1b4d3e);
-  border-radius: 999px;
-  cursor: pointer;
-}
-
 /* Det valda läget markeras som de valda korten */
 .mode.selected {
-  background: #d6f5dc;
-  border-color: #2f9e4f;
+  background: var(--selected-bg);
+  border-color: var(--green-selected);
 }
 
+/* Startknappen är lite större än en vanlig .btn */
 .start {
   margin-top: 1rem;
   padding: 0.75rem 2rem;
-  font: inherit;
-  font-weight: 700;
-  color: #ffffff;
-  background: var(--primary-green, #1b4d3e);
-  border: 3px solid var(--primary-green, #1b4d3e);
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-.start:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 </style>
