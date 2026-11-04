@@ -9,7 +9,6 @@ const authStore = useAuthStore()
 // Blir true en kort stund efter utloggning, så att meddelandet syns
 const showLoggedOut = ref(false)
 
-console.log("Kollar authStore.user:", authStore.user)
 // Loggar ut, skickar användaren till startsidan och visar ett kort meddelande
 function logout() {
   authStore.logout()
@@ -68,11 +67,15 @@ function logout() {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Knewave&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
+/* Alla avstånd i headern styrs av gap här – inga marginaler på delarna */
 .app-header {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 0.75rem;
+  padding-top: 1rem;
 }
+
 .logo-container {
   display: flex;
   align-items: center;
@@ -83,6 +86,11 @@ function logout() {
   font-style: normal;
   font-size: x-large;
   text-shadow: 1px 1px 0px rgba(182, 241, 171, 0.5);
+}
+
+/* h1 har en stor standardmarginal från webbläsaren – den tar vi bort */
+.logo-container h1 {
+  margin: 0;
 }
 
 img {
@@ -97,7 +105,6 @@ img {
 .main-nav {
   display: flex;
   gap: 15px;
-  margin-bottom: 20px;
   width: 100%;
   max-width: 600px;
   justify-content: center;
@@ -137,15 +144,14 @@ img {
 button.nav-button {
   font-family: inherit;
   cursor: pointer;
-}.user-info-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 
+/* "Inloggad som …" – en liten rad under menyn */
 .user-name {
   align-self: center;
   white-space: nowrap;
+  font-size: 0.9rem;
+  opacity: 0.8;
 }
 
 /* Kort meddelande efter utloggning. Ligger fast högst upp i fönstret,
@@ -165,17 +171,20 @@ button.nav-button {
   box-shadow: 0 6px 16px rgba(27, 77, 62, 0.25);
 }
 
-/* Desktop*/
+/* Desktop: logga och meny på en rad, "Inloggad som …" på en egen rad under */
 @media screen and (min-width: 1024px)  {
-  .app-header{
+  .app-header {
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 25px;
+    column-gap: 25px;
+    row-gap: 0.25rem;
     justify-content: center;
     align-items: center;
   }
-  .main-nav {
-    margin-bottom: 0;
+
+  .user-name {
+    flex-basis: 100%;
+    text-align: center;
   }
 }
 
@@ -184,7 +193,6 @@ button.nav-button {
   .main-nav {
     gap: 0.5rem;
     padding: 0 1rem;
-    margin-bottom: 0.75rem;
   }
 
   .nav-button {
