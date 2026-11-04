@@ -13,8 +13,20 @@ onUnmounted(() => {
     callbackActive = false;
 });
 
+// Token kommer i fragmentet: /auth/success#token=...
+// (?token=... godtas också, så att inloggningen fungerar även om backenden
+// ännu inte är uppdaterad när frontenden driftsätts. Kan tas bort senare.)
+function readToken() {
+    const fromHash = new URLSearchParams(route.hash.slice(1)).get('token');
+    return fromHash || route.query.token;
+}
+
 onMounted(async () => {
-    const token = route.query.token;
+    const token = readToken();
+
+    // Ta bort token ur adressfältet och historiken direkt, så att den inte
+    // syns, sparas i historiken eller följer med om någon kopierar adressen
+    window.history.replaceState(window.history.state, '', route.path);
 
     if (typeof token !== 'string' || !token) {
         await router.replace('/login?error=AuthenticationFailed');
