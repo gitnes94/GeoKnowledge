@@ -6,24 +6,24 @@ const authStore = useAuthStore()
 </script>
 
 <template>
-  <section class="menu-view">
+  <section class="page menu-view">
     <h2>Meny</h2>
     <p class="intro">Välj vad du vill göra.</p>
 
     <div class="menu-items">
-      <RouterLink to="/menu/leaderboard" class="menu-card">
+      <RouterLink to="/menu/leaderboard" class="card menu-card">
         <span class="icon" aria-hidden="true">🏆</span>
         <span class="name">Topplistor</span>
         <span class="description">Se vilka spelare som har högst resultat.</span>
       </RouterLink>
 
-      <RouterLink v-if="authStore.isLoggedIn" to="/menu/profile" class="menu-card">
+      <RouterLink v-if="authStore.isLoggedIn" to="/menu/profile" class="card menu-card">
         <span class="icon" aria-hidden="true">👤</span>
         <span class="name">Profil</span>
         <span class="description">Se din statistik och klarade utmaningar!</span>
       </RouterLink>
 
-      <RouterLink to="/menu/trophies" class="menu-card">
+      <RouterLink to="/menu/trophies" class="card menu-card">
         <span class="icon" aria-hidden="true">🎖️</span>
         <span class="name">Troféer</span>
         <span class="description">Se dina troféer och vad som är kvar.</span>
@@ -34,15 +34,9 @@ const authStore = useAuthStore()
 </template>
 
 <style scoped>
+/* Panelen kommer från .page i style.css – här bara centreringen */
 .menu-view {
-  max-width: 44rem;
-  width: calc(100% - 2rem);
-  margin: 1.5rem auto;
-  padding: 2rem 1.5rem;
   text-align: center;
-  background: var(--card-bg, #ffffff);
-  border-radius: 1.75rem;
-  box-shadow: 0 10px 25px rgba(27, 77, 62, 0.12);
 }
 
 h2 {
@@ -61,6 +55,7 @@ h2 {
   gap: 1rem;
 }
 
+/* Utseende och hover kommer från .card i style.css – här bara innehållets layout */
 .menu-card {
   display: flex;
   flex-direction: column;
@@ -70,21 +65,7 @@ h2 {
      Utan width blir varje kort bara så brett som sin text. */
   width: 100%;
   max-width: 21rem;
-  box-sizing: border-box;
   margin: 0 auto;
-  padding: 1.25rem 1rem;
-  color: var(--primary-green, #1b4d3e);
-  background: #ffffff;
-  border: 3px solid var(--primary-green, #1b4d3e);
-  border-radius: 1.25rem;
-  box-shadow: 0 4px 10px rgba(27, 77, 62, 0.12);
-  text-decoration: none;
-  transition: transform 0.15s ease, background 0.15s ease;
-}
-
-.menu-card:hover {
-  transform: translateY(-2px);
-  background: #f0f8f1;
 }
 
 .icon {

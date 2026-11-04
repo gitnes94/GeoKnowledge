@@ -113,18 +113,18 @@ img {
   max-width: 250px;
   min-width: min-content;
   white-space: nowrap;
-  background-color: var(--card-bg, #ffffff);
-  color: var(--primary-green, #1B4D3E); 
-  border: 3px solid var(--primary-green, #1B4D3E);
-  border-radius: 50px; 
+  background-color: var(--card-bg);
+  color: var(--primary-green);
+  border: var(--border);
+  border-radius: var(--radius-pill);
   text-decoration: none;
   font-weight: bold;
   font-size: 1.1rem;
-  box-shadow: 0 4px 10px rgba(27, 77, 62, 0.12);
+  box-shadow: var(--shadow-card);
   transition: all 0.2s ease;
 }
 .nav-button:hover {
-  background-color: #f0f8f1; 
+  background-color: var(--hover-bg);
   transform: translateY(-2px); 
   box-shadow: 0 6px 14px rgba(27, 77, 62, 0.2);
 }.nav-button:active {
@@ -158,10 +158,10 @@ button.nav-button {
   z-index: 10;
   margin: 0;
   padding: 0.75rem 1.5rem;
-  background: var(--primary-green, #1b4d3e);
-  color: #ffffff;
+  background: var(--primary-green);
+  color: var(--white);
   font-weight: bold;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   box-shadow: 0 6px 16px rgba(27, 77, 62, 0.25);
 }
 
