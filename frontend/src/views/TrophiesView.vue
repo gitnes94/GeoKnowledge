@@ -57,7 +57,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="page trophies-view">
+  <section class="page trophies-view" :class="{ 'logged-out': !authStore.token }">
     <h2>Troféer</h2>
 
     <p v-if="!authStore.token" class="status">
@@ -207,6 +207,10 @@ onMounted(async () => {
     padding: 1.5rem 0.75rem;
   }
 
+  .trophies-view.logged-out {
+    padding: 1.5rem 1rem;
+  }
+
   .master {
     border-spacing: 0.2rem;
   }
@@ -241,19 +245,17 @@ onMounted(async () => {
   text-align: center;
 }
 
+.trophies-view.logged-out {
+  max-width: 44rem;
+}
+
 h2 {
   margin: 0;
   font-size: 1.75rem;
 }
 
-.status,
 .summary {
   margin: 0.5rem 0 0;
-}
-
-.status a {
-  color: inherit;
-  font-weight: 700;
 }
 
 .group {

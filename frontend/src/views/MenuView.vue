@@ -17,7 +17,7 @@ const authStore = useAuthStore()
         <span class="description">Se vilka spelare som har högst resultat.</span>
       </RouterLink>
 
-      <RouterLink v-if="authStore.isLoggedIn" to="/menu/profile" class="card menu-card">
+      <RouterLink to="/menu/profile" class="card menu-card">
         <span class="icon" aria-hidden="true">👤</span>
         <span class="name">Profil</span>
         <span class="description">Se din statistik och klarade utmaningar!</span>
