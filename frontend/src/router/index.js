@@ -12,6 +12,7 @@ import ProfileView from '@/views/ProfileView.vue';
 import MenuView from '@/views/MenuView.vue';
 import LeaderboardView from '@/views/LeaderboardView.vue';
 import TrophiesView from '@/views/TrophiesView.vue';
+import ToSView from '@/views/ToSView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -80,6 +81,11 @@ const router = createRouter({
       path: '/menu/profile',
       name: 'profile',
       component: ProfileView
+    },
+    {
+      path: '/tos',
+      name: 'tos',
+      component: ToSView
     }
   ]
 });
